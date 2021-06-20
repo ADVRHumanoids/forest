@@ -92,3 +92,4 @@ class Package(BasicPackage):
             # TODO more specific exception
             raise FileNotFoundError(f'{filename} does not exist')
         return Package.from_file(file=filename)
+
