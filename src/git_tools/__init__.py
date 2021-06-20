@@ -1,5 +1,6 @@
 import subprocess
 import sys 
+from common import proc_utils
 
 class GitTools:
 
@@ -15,20 +16,8 @@ class GitTools:
             # TODO more specific exception
             raise RuntimeError(f'unsupported protocol "{proto}"')
         
-        try:
-            subprocess.check_output(['git', 'clone', addr, self.srcdir], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            print(e.output.decode(), file=sys.stderr)
-            return False 
-
-        return True
+        return proc_utils.call_process(args=['git', 'clone', addr, self.srcdir])
 
     def checkout(self, tag):
 
-        try:
-            subprocess.check_output(['git', 'checkout', tag], stderr=subprocess.STDOUT, cwd=self.srcdir)
-        except subprocess.CalledProcessError as e:
-            print(e.output.decode(), file=sys.stderr)
-            return False 
-
-        return True
+        return proc_utils.call_process(['git', 'checkout', tag], cwd=self.srcdir)

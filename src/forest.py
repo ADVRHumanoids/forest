@@ -13,6 +13,9 @@ parser.add_argument('recipe', help='name of recipe with fetch and build informat
 parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
 args = parser.parse_args()
 
+if args.verbose:
+    from common import proc_utils
+    proc_utils.call_process_verbose = True
 
 def install_package(pkg : str):
     
@@ -57,11 +60,12 @@ def install_package(pkg : str):
         print(f'[{pkg.name}] source code  already exists, skipping clone')
 
     elif not git.clone(server=pkg.git_server, repository=pkg.git_repo, proto='ssh'):
-        print(f'[{pkg.name}] unable to clone source code, skipping..')
+        print(f'[{pkg.name}] unable to clone source code')
         return False
 
     elif not git.checkout(tag=pkg.git_tag):
-        print(f'[{pkg.name}] unable to checkout tag {pkg.git_tag}, skipping..')
+        print(f'[{pkg.name}] unable to checkout tag {pkg.git_tag}')
+        return False
         
     # create cmake tools
     cmakelists = os.path.join(srcdir, pkg.cmakelists)
@@ -92,16 +96,20 @@ def install_package(pkg : str):
     return True
     
 
+# define directories for source, build, install
 rootdir = os.getcwd()
 buildroot = os.path.join(rootdir, 'build')
 installdir = os.path.join(rootdir, 'install')
 srcroot = os.path.join(rootdir, 'src')
 buildtype = 'Release'
 
+# create directories
 for dir in (buildroot, installdir, srcroot):
     if not os.path.exists(dir):
         os.mkdir(dir)
 
+# perform required installation
 success = install_package(args.recipe)
 
+# return value
 exit(0 if success else 1)

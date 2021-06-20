@@ -3,6 +3,8 @@ import os
 import sys
 import subprocess
 
+from common import proc_utils
+
 cmake_command = 'cmake'
 
 def _construct(self, srcdir, builddir):
@@ -25,17 +27,8 @@ def _build(self, target, jobs):
 
 def _call_cmake(args, cwd='.', print_on_error=True):
 
-    try:
-        # invoke cmake
-        args_str = list(map(str, args))
-        subprocess.check_output([cmake_command] + args_str, stderr=subprocess.STDOUT, cwd=cwd)
-    except subprocess.CalledProcessError as e:
-        # on error, print output
-        if print_on_error:
-            print(e.output.decode(), file=sys.stderr)
-        return False
-
-    return True
+    args_str = list(map(str, args))
+    return proc_utils.call_process(args=[cmake_command] + args_str, cwd=cwd, print_on_error=print_on_error)
 
 
 def _find_package(pkg_name: str):
