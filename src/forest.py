@@ -25,7 +25,11 @@ def install_package(pkg : str):
     """
 
     # retrieve package info from recipe
-    pkg = package.Package.from_name(name=pkg)
+    try:
+        pkg = package.Package.from_name(name=pkg)
+    except FileNotFoundError:
+        print(f'[{pkg}] recipe file not found (searched in {package.Package.get_recipe_path()})')
+        return False
 
     # install dependencies if not found
     for dep in pkg.depends:

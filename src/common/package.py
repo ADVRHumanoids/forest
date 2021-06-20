@@ -19,9 +19,16 @@ class Package(BasicPackage):
     with git and cmake (for now that's all we support)
     """
 
-    # default (and for now only) directory with recipes inside
-    # this path is relative to this file's directory
-    recipe_path = '../../recipes'
+    
+    @staticmethod
+    def get_recipe_path():
+        """
+        Returns the default (and for now only) directory with recipes inside.
+        This path is relative to this file's directory.
+        """
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.realpath(os.path.join(this_dir, '../../recipes'))
+        
 
     def __init__(self, name, server, repository, tag=None, depends=list(), cmake_args=list()) -> None:
         super().__init__(name, depends)
@@ -31,6 +38,7 @@ class Package(BasicPackage):
         self.cmake_args = cmake_args
         self.cmakelists = ''
         self.target = 'install'
+
 
     @staticmethod
     def from_yaml(name, yaml):
@@ -78,8 +86,9 @@ class Package(BasicPackage):
         Raises:
             RuntimeError: recipe file does not exist
         """
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        filename = os.path.join(this_dir, Package.recipe_path, name + '.yaml')
+
+        filename = os.path.join(Package.get_recipe_path(), name + '.yaml')
         if not os.path.exists(filename):
-            raise RuntimeError(f'{filename} does not exist')
+            # TODO more specific exception
+            raise FileNotFoundError(f'{filename} does not exist')
         return Package.from_file(file=filename)

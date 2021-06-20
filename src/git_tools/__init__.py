@@ -12,6 +12,7 @@ class GitTools:
         elif proto == 'https':
             addr = f'https://{server}/{repository}'
         else:
+            # TODO more specific exception
             raise RuntimeError(f'unsupported protocol "{proto}"')
         
         try:
