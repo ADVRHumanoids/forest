@@ -1,6 +1,4 @@
-import subprocess
-import sys 
-from common import proc_utils
+from forest.common import proc_utils
 
 class GitTools:
 

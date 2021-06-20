@@ -1,7 +1,7 @@
 import os
 
-from cmake_tools import CmakeTools
-from git_tools import GitTools
+from forest.cmake_tools import CmakeTools
+from forest.git_tools import GitTools
 from . import package
 
 # function to install one package with dependencies

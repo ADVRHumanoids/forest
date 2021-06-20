@@ -27,7 +27,7 @@ class Package(BasicPackage):
         This path is relative to this file's directory.
         """
         this_dir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.realpath(os.path.join(this_dir, '../../recipes'))
+        return os.path.realpath(os.path.join(this_dir, '../recipes'))
         
 
     def __init__(self, name, server, repository, tag=None, depends=list(), cmake_args=list()) -> None:

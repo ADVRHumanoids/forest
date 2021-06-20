@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from common.install import install_package
+from forest.common.install import install_package
 
 # just a try-except wrapper to catch ctrl+c
 def main():

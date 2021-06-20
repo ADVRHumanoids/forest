@@ -1,9 +1,7 @@
 from tempfile import TemporaryDirectory
 import os 
-import sys
-import subprocess
 
-from common import proc_utils
+from forest.common import proc_utils
 
 cmake_command = 'cmake'
 
