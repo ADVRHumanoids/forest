@@ -1,0 +1,3 @@
+depends:
+  - matlogger2
+  - xbot2_examples

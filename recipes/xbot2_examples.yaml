@@ -1,0 +1,13 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/xbot2_examples.git
+  tag: master
+
+build:
+  type: cmake
+  args: []
+
+depends:
+  - xbot2
+  - gazebo

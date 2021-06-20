@@ -1,0 +1,10 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/matlogger2.git
+  tag: devel
+
+build:
+  type: cmake
+  args: 
+    - -DMATLOGGER2_VERBOSE=0
