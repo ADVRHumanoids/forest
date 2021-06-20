@@ -15,6 +15,14 @@ args = parser.parse_args()
 
 
 def install_package(pkg : str):
+    
+    """Fetch a recipe file from the default path using the given package name, 
+    and perform the required cloning and building steps of the package and 
+    its dependencies
+
+    Returns:
+        bool: success flag
+    """
 
     # retrieve package info from recipe
     pkg = package.Package.from_name(name=pkg)
