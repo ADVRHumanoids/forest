@@ -10,3 +10,5 @@ The forest project aims at automatizing the clone and build process for open sou
 5) run `forest --help` for usage information
 
 ## Usage (for early adopters)
+
+Do `pip3 install hhcm-forest` instead of steps 1)-3)
