@@ -2,8 +2,9 @@
 
 import argparse
 import os
+import sys
 
-from forest.common.install import install_package
+from forest.common.install import install_package, write_setup_file
 
 # just a try-except wrapper to catch ctrl+c
 def main():
@@ -18,13 +19,18 @@ def do_main():
 
     # parse cmd line args
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
-    parser.add_argument('recipe', help='name of recipe with fetch and build information')
+    parser.add_argument('recipe', nargs='?', help='name of recipe with fetch and build information')
+    parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     args = parser.parse_args()
 
+    if not args.init and args.recipe is None:
+        print('positional argument "recipe" is required unless --init, -i is passed', file=sys.stderr)
+        return False
+
     # verbose mode will show output of any called process
     if args.verbose:
-        from common import proc_utils
+        from forest.common import proc_utils
         proc_utils.call_process_verbose = True
 
     # define directories for source, build, install
@@ -38,6 +44,13 @@ def do_main():
     for dir in (buildroot, installdir, srcroot):
         if not os.path.exists(dir):
             os.mkdir(dir)
+
+    # create setup.bash if does not exist
+    write_setup_file(installdir=installdir)
+
+    # if init mode, stop here
+    if args.init:
+        return True
 
     # perform required installation
     success = install_package(pkg=args.recipe, 

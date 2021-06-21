@@ -82,3 +82,21 @@ def install_package(pkg: str, srcroot: str, buildroot: str, installdir: str, bui
 
     print(f'[{pkg.name}] ok')
     return True
+
+
+def write_setup_file(installdir):
+    
+    """
+    Write a setup file to the given installdir directory.
+    """
+
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    setup_template = os.path.join(this_dir, 'setup.bash')
+    with open(setup_template, 'r') as f:
+        content = f.read()
+        content = content.replace('£PREFIX£', os.path.realpath(installdir))
+    
+    setup_file = os.path.join(installdir, 'setup.bash')
+    if not os.path.exists(setup_file):
+        with open(setup_file, 'w') as f:
+            f.write(content)
