@@ -26,8 +26,11 @@ def install_package(pkg: str, srcroot: str, buildroot: str, installdir: str, bui
     for dep in pkg.depends:
         dep_found = CmakeTools.find_package(dep)
         if not dep_found:
-            print(f'[{pkg.name}] depends on {dep} which was not found, installing..')
-            install_package(dep, srcroot, buildroot, installdir, buildtype)
+            print(f'[{pkg.name}] depends on {dep} -> not found, installing..')
+            ok = install_package(dep, srcroot, buildroot, installdir, buildtype)
+            if not ok:
+                print(f'[{pkg.name}] failed to install dependency {dep}')
+                return False
         else:
             print(f'[{pkg.name}] depends on {dep} -> found')
     
