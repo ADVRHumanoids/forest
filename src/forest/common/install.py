@@ -5,7 +5,12 @@ from forest.git_tools import GitTools
 from . import package
 
 # function to install one package with dependencies
-def install_package(pkg: str, srcroot: str, buildroot: str, installdir: str, buildtype: str):
+def install_package(pkg: str,
+                    srcroot: str,
+                    buildroot: str,
+                    installdir: str,
+                    buildtype: str,
+                    jobs : int):
     
     """Fetch a recipe file from the default path using the given package name, 
     and perform the required cloning and building steps of the package and 
@@ -27,7 +32,7 @@ def install_package(pkg: str, srcroot: str, buildroot: str, installdir: str, bui
         dep_found = CmakeTools.find_package(dep)
         if not dep_found:
             print(f'[{pkg.name}] depends on {dep} -> not found, installing..')
-            ok = install_package(dep, srcroot, buildroot, installdir, buildtype)
+            ok = install_package(dep, srcroot, buildroot, installdir, buildtype, jobs)
             if not ok:
                 print(f'[{pkg.name}] failed to install dependency {dep}')
                 return False
@@ -79,7 +84,7 @@ def install_package(pkg: str, srcroot: str, buildroot: str, installdir: str, bui
 
     # build
     print(f'[{pkg.name}] building...')
-    if not cmake.build(target=pkg.target, jobs=8):
+    if not cmake.build(target=pkg.target, jobs=jobs):
         print(f'[{pkg.name}] build failed')
         return False 
 
