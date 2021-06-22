@@ -5,6 +5,9 @@ call_process_verbose = False
 
 def call_process(args, cwd='.', verbose=False, print_on_error=True):
 
+    if verbose or call_process_verbose:
+        print('calling "{}"'.format(' '.join(args)))
+
     if call_process_verbose or verbose:
         # Popen will print output to terminal
         proc = subprocess.Popen(args=args, cwd=cwd)
