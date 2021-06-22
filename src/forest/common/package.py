@@ -28,7 +28,17 @@ class Package(BasicPackage):
         """
         this_dir = os.path.dirname(os.path.abspath(__file__))
         return os.path.realpath(os.path.join(this_dir, '../recipes'))
-        
+
+    @staticmethod
+    def get_available_recipes() -> List[str]:
+        """
+        Returns a list of available recipe names
+        """
+        path = Package.get_recipe_path()
+        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        files = [os.path.splitext(f)[0] for f in files]
+        files.sort()
+        return files
 
     def __init__(self, name, server, repository, tag=None, depends=list(), cmake_args=list()) -> None:
         super().__init__(name, depends)
