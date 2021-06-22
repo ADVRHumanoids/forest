@@ -26,7 +26,7 @@ class CmakeTools:
         from ._impl import _is_configured
         return _is_configured(self)
 
-    def configure(self, args=list()):
+    def configure(self, args=None):
         """
         Configure the project by calling cmake with given arguments
 

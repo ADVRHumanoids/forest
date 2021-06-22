@@ -15,12 +15,15 @@ def _is_configured(self):
 
 def _configure(self, args):
 
-    return _call_cmake([self.srcdir, '-B', self.builddir] + args)
+    if args is None:
+        args = list()
+
+    return _call_cmake([self.srcdir] + args, cwd=self.builddir)
     
 
 def _build(self, target, jobs):
 
-    return _call_cmake(['--build', self.builddir, '--target', target, '-j', jobs])
+    return _call_cmake(['--build', self.builddir, '--target', target, '--', '-j', jobs])
 
 
 def _call_cmake(args, cwd='.', print_on_error=True):
