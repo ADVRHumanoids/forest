@@ -1,0 +1,1 @@
+complete -W "--init --list --verbose $(forest --list)" forest

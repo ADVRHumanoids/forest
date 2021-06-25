@@ -38,7 +38,7 @@ def do_main():
 
     # print available packages
     if args.list:
-        print('\n'.join(Package.get_available_recipes()))
+        print(' '.join(Package.get_available_recipes()))
         return True
 
     # define directories for source, build, install
