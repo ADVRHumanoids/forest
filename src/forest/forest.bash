@@ -1,1 +1,1 @@
-complete -W "--init --list --verbose $(forest --list)" forest
+eval "$(register-python-argcomplete3 forest)"

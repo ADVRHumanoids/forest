@@ -3,6 +3,7 @@
 import argparse
 import os
 import sys
+import argcomplete
 
 from forest.common.install import install_package, write_setup_file
 from forest.common.package import Package
@@ -20,11 +21,12 @@ def do_main():
 
     # parse cmd line args
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
-    parser.add_argument('recipe', nargs='?', help='name of recipe with fetch and build information')
+    parser.add_argument('recipe', nargs='?', choices=Package.get_available_recipes(), help='name of recipe with fetch and build information')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
     parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     if not args.init and not args.list and args.recipe is None:
