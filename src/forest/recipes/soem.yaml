@@ -1,0 +1,12 @@
+clone:
+  type: git
+  server: github.com
+  repository: alessiomargan/SOEM.git
+  tag: xeno3
+
+build:
+  type: cmake
+  args:
+    - -DENABLE_XENO=OFF
+
+depends: []

@@ -1,0 +1,15 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/xbot2_wip.git
+  tag: albero-devel
+
+build:
+  type: cmake
+  args:
+    - -DENABLE_XENO=OFF
+
+depends:
+  - XBotInterface
+  - matlogger2
+  - gazebo

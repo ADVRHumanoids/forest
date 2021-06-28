@@ -1,0 +1,17 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/CartesianInterface.git
+  tag: albero-devel-2
+
+build:
+  type: cmake
+  args:
+    - -DXBOT2_ENABLE_XENO=OFF
+
+depends:
+  - XBotInterface
+  - OpenSoT
+  - RMLTypeII
+  - matlogger2
+#  - Eigen3

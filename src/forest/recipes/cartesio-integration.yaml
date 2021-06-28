@@ -1,0 +1,14 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/cartesian-impedance-controller.git
+  tag: aw_demo2
+
+build:
+  type: cmake
+  args: []
+
+depends:
+  - xbot2
+  - cartesian_interface
+#:q  - Eigen3

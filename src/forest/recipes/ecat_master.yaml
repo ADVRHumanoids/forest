@@ -1,0 +1,13 @@
+clone:
+  type: git
+  server: gitlab.advr.iit.it
+  repository: xeno-ecat/ecat_master_advr.git
+  tag: xbot2_fixed
+
+build:
+  type: cmake
+  args:
+    - -DENABLE_XENO=OFF
+
+depends:
+  - soem

@@ -2,12 +2,16 @@ clone:
   type: git
   server: github.com
   repository: advrhumanoids/xbot2_examples.git
-  tag: master
+  tag: fi_gripper_btns
 
 build:
   type: cmake
-  args: []
+  args:
+    - -DENABLE_XENO=OFF
 
 depends:
   - xbot2
+  - cartesian_interface
   - gazebo
+  - cartesio-integration
+  - ec_xbot2_client

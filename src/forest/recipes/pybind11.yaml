@@ -1,0 +1,11 @@
+clone:
+  type: git
+  server: github.com
+  repository: pybind/pybind11.git
+  tag: master
+
+build:
+  type: cmake
+  args: []
+
+depends: []

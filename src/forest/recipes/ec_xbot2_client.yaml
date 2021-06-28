@@ -1,0 +1,17 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/ec_xbot2_client.git
+  tag: albero_devel
+
+build:
+  type: cmake
+  args:
+    - -DENABLE_XENO=OFF
+
+depends:
+  - xbot2
+  - ecat_master
+  - matlogger2
+  - XBotInterface
+  - protobuf
