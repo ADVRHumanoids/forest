@@ -30,13 +30,13 @@ class Package(BasicPackage):
         return os.path.realpath(os.path.join(this_dir, '../recipes'))
         
 
-    def __init__(self, name, server, repository, tag=None, depends=list(), cmake_args=list()) -> None:
+    def __init__(self, name, server, repository, tag=None, depends=list(), cmake_args=list(), cmakelists='') -> None:
         super().__init__(name, depends)
         self.git_tag = tag
         self.git_server = server
         self.git_repo = repository
         self.cmake_args = cmake_args
-        self.cmakelists = ''
+        self.cmakelists = cmakelists
         self.target = 'install'
 
 
@@ -59,7 +59,8 @@ class Package(BasicPackage):
                 repository=yaml['clone']['repository'],
                 tag=yaml['clone'].get('tag', None),
                 depends=yaml.get('depends', list()),
-                cmake_args=yaml['build'].get('args', list()))
+                cmake_args=yaml['build'].get('args', list()),
+                cmakelists=yaml['build'].get('cmakelists', ''))
         else:
             return BasicPackage(name=name, 
                 depends=yaml['depends'])
