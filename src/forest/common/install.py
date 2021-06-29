@@ -141,7 +141,7 @@ def install_package(pkg: str,
                        installdir=installdir, 
                        buildtype=buildtype, 
                        jobs=jobs, 
-                       force_configure=True)   
+                       force_configure=False)   
 
     if ok:
         print(f'[{pkg.name}] ok')
