@@ -26,6 +26,9 @@ def do_main():
     parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
+    buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
+    parser.add_argument('--build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake')
+
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
@@ -48,7 +51,7 @@ def do_main():
     buildroot = os.path.join(rootdir, 'build')
     installdir = os.path.join(rootdir, 'install')
     srcroot = os.path.join(rootdir, 'src')
-    buildtype = 'Release'
+    buildtype = args.build_type
 
     # create directories
     for dir in (buildroot, installdir, srcroot):
