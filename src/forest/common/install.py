@@ -37,10 +37,11 @@ def build_package(pkgname: str,
     cmake = CmakeTools(srcdir=cmakelists, builddir=builddir)
 
     # set install prefix and build type (only on first configuration)
-    cmake_args = list(pkg.cmake_args)
+    cmake_args = list()
     if not cmake.is_configured():
         cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
         cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
+        cmake_args += pkg.cmake_args  # note: flags from recipes as last entries to allow override
 
     # configure
     if not cmake.is_configured() or force_configure:
