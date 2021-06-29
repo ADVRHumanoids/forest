@@ -29,13 +29,27 @@ def install_package(pkg: str,
 
     # install dependencies if not found
     for dep in pkg.depends:
+
         dep_found = CmakeTools.find_package(dep)
+        dep_builddir = os.path.join(buildroot, dep)
+
         if not dep_found:
             print(f'[{pkg.name}] depends on {dep} -> not found, installing..')
             ok = install_package(dep, srcroot, buildroot, installdir, buildtype, jobs)
             if not ok:
                 print(f'[{pkg.name}] failed to install dependency {dep}')
                 return False
+        elif os.path.exists(dep_builddir):
+            print(f'[{pkg.name}] depends on {dep} -> build found, building..')   
+            ok = build_package(pkgname=dep, 
+                               srcroot=srcroot, 
+                               buildroot=buildroot, 
+                               installdir=installdir, 
+                               buildtype=buildtype, 
+                               jobs=jobs)   
+            if not ok:
+                print(f'[{pkg.name}] failed to build dependency {dep}')
+                return False 
         else:
             print(f'[{pkg.name}] depends on {dep} -> found')
     
