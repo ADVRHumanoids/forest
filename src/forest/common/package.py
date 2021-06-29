@@ -8,9 +8,9 @@ class BasicPackage:
     and a list of dependencies
     """
 
-    def __init__(self, name, depends:List[str]=list()) -> None:
+    def __init__(self, name, depends:List[str]=None) -> None:
         self.name = name 
-        self.depends = depends
+        self.depends = depends if depends is not None else list()
 
 
 class Package(BasicPackage):
@@ -28,14 +28,24 @@ class Package(BasicPackage):
         """
         this_dir = os.path.dirname(os.path.abspath(__file__))
         return os.path.realpath(os.path.join(this_dir, '../recipes'))
-        
 
-    def __init__(self, name, server, repository, tag=None, depends=list(), cmake_args=list(), cmakelists='') -> None:
+    @staticmethod
+    def get_available_recipes() -> List[str]:
+        """
+        Returns a list of available recipe names
+        """
+        path = Package.get_recipe_path()
+        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        files = [os.path.splitext(f)[0] for f in files]
+        files.sort()
+        return files
+
+    def __init__(self, name, server, repository, tag=None, depends=None, cmake_args=None, cmakelists='') -> None:
         super().__init__(name, depends)
         self.git_tag = tag
         self.git_server = server
         self.git_repo = repository
-        self.cmake_args = cmake_args
+        self.cmake_args = cmake_args if cmake_args is not None else list()
         self.cmakelists = cmakelists
         self.target = 'install'
 
