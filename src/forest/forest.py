@@ -64,6 +64,7 @@ def do_main():
 
     # no recipe to install, exit
     if args.recipe is None:
+        print('no recipe to build, exiting..')
         return True
 
     # check ws
@@ -71,6 +72,9 @@ def do_main():
         print(f'current directory {rootdir} is not a forest workspace.. \
 have you called forest --init ?', file=sys.stderr)
         return False
+
+    # print jobs
+    print(f'building {args.recipe} with {args.jobs} parallel jobs')
 
     # perform required installation
     success = install_package(pkg=args.recipe, 
