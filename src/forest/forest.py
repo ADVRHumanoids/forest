@@ -5,7 +5,7 @@ import os
 import sys
 import argcomplete
 
-from forest.common.install import install_package, write_setup_file
+from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
 from forest.common.package import Package
 
 # just a try-except wrapper to catch ctrl+c
@@ -32,10 +32,6 @@ def do_main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    if not args.init and not args.list and args.recipe is None:
-        print('positional argument "recipe" is required unless --init or --list is passed', file=sys.stderr)
-        return False
-
     # verbose mode will show output of any called process
     if args.verbose:
         from forest.common import proc_utils
@@ -53,17 +49,28 @@ def do_main():
     srcroot = os.path.join(rootdir, 'src')
     buildtype = args.build_type
 
-    # create directories
-    for dir in (buildroot, installdir, srcroot):
-        if not os.path.exists(dir):
-            os.mkdir(dir)
-
-    # create setup.bash if does not exist
-    write_setup_file(installdir=installdir)
-
-    # if init mode, stop here
+    # initialize workspace
     if args.init:
+        # create directories
+        for dir in (buildroot, installdir, srcroot):
+            if not os.path.exists(dir):
+                os.mkdir(dir)
+
+        # create setup.bash if does not exist
+        write_setup_file(installdir=installdir)
+
+        # create marker file
+        write_ws_file(rootdir=rootdir)  # note: error on failure?
+
+    # no recipe to install, exit
+    if args.recipe is None:
         return True
+
+    # check ws
+    if not check_ws_file(rootdir=rootdir):
+        print(f'current directory {rootdir} is not a forest workspace.. \
+have you called forest --init ?', file=sys.stderr)
+        return False
 
     # perform required installation
     success = install_package(pkg=args.recipe, 

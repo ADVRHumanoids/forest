@@ -108,3 +108,33 @@ def write_setup_file(installdir):
     if not os.path.exists(setup_file):
         with open(setup_file, 'w') as f:
             f.write(content)
+
+
+def check_ws_file(rootdir):
+    
+    """
+    Write a hidden file to mark the forest root directory
+    """
+
+    ws_file = os.path.join(rootdir, '.forest')
+
+    return os.path.exists(ws_file)
+
+
+def write_ws_file(rootdir):
+    
+    """
+    Write a hidden file to mark the forest root directory
+    """
+    
+    ws_file = os.path.join(rootdir, '.forest')
+
+    if check_ws_file(rootdir=rootdir):
+        print('workspace already initialized')
+        return False
+
+    with open(ws_file, 'w') as f:
+        f.write('# forest marker file')
+        return True
+
+    
