@@ -12,8 +12,8 @@ def build_package(pkgname: str,
                   buildroot: str, 
                   installdir: str,
                   buildtype: str,
-                  jobs : int,
-                  force_configure=False):
+                  jobs: int,
+                  force_reconfigure=False):
 
     if pkgname in _build_cache.keys():
         print(f'[{pkgname}] already built, skipping')
@@ -36,15 +36,14 @@ def build_package(pkgname: str,
         os.mkdir(builddir)
     cmake = CmakeTools(srcdir=cmakelists, builddir=builddir)
 
-    # set install prefix and build type (only on first configuration)
     cmake_args = list()
-    if not cmake.is_configured():
+    # configure
+    if not cmake.is_configured() or force_reconfigure:
+        # set install prefix and build type (only on first or forced configuration)
         cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
         cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
         cmake_args += pkg.cmake_args  # note: flags from recipes as last entries to allow override
 
-    # configure
-    if not cmake.is_configured() or force_configure:
         print(f'[{pkg.name}] running cmake...')
         if not cmake.configure(args=cmake_args):
             print(f'[{pkg.name}] configuring failed')
@@ -66,7 +65,8 @@ def install_package(pkg: str,
                     buildroot: str,
                     installdir: str,
                     buildtype: str,
-                    jobs : int):
+                    jobs: int,
+                    force_reconfigure=False):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -103,7 +103,8 @@ def install_package(pkg: str,
                                buildroot=buildroot, 
                                installdir=installdir, 
                                buildtype=buildtype, 
-                               jobs=jobs)   
+                               jobs=jobs,
+                               force_reconfigure=force_reconfigure)
             if not ok:
                 print(f'[{pkg.name}] failed to build dependency {dep}')
                 return False 
@@ -141,7 +142,7 @@ def install_package(pkg: str,
                        installdir=installdir, 
                        buildtype=buildtype, 
                        jobs=jobs, 
-                       force_configure=False)   
+                       force_reconfigure=force_reconfigure)
 
     if ok:
         print(f'[{pkg.name}] ok')
