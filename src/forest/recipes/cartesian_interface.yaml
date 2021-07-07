@@ -12,6 +12,6 @@ build:
 depends:
   - XBotInterface
   - OpenSoT
-  - RMLTypeII
+  - ReflexxesTypeII
   - matlogger2
 #  - Eigen3
