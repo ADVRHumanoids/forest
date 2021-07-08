@@ -27,7 +27,8 @@ def do_main():
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
-    parser.add_argument('--build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake')
+    parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
+    parser.add_argument('--force-reconfigure', required=False, action='store_true', help='print additional information')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -47,7 +48,7 @@ def do_main():
     buildroot = os.path.join(rootdir, 'build')
     installdir = os.path.join(rootdir, 'install')
     srcroot = os.path.join(rootdir, 'src')
-    buildtype = args.build_type
+    buildtype = args.default_build_type
 
     # initialize workspace
     if args.init:
@@ -77,12 +78,14 @@ have you called forest --init ?', file=sys.stderr)
     print(f'building {args.recipe} with {args.jobs} parallel jobs')
 
     # perform required installation
-    success = install_package(pkg=args.recipe, 
-        srcroot=srcroot, 
-        buildroot=buildroot,
-        installdir=installdir,
-        buildtype=buildtype,
-        jobs=args.jobs)
+    success = install_package(pkg=args.recipe,
+                              srcroot=srcroot,
+                              buildroot=buildroot,
+                              installdir=installdir,
+                              buildtype=buildtype,
+                              jobs=args.jobs,
+                              force_reconfigure=args.force_reconfigure
+                              )
 
     return success
 

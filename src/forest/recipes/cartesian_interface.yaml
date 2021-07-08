@@ -8,6 +8,7 @@ build:
   type: cmake
   args:
     - -DXBOT2_ENABLE_XENO=OFF
+    - -DCMAKE_BUILD_TYPE=None
 
 depends:
   - XBotInterface
