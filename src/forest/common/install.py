@@ -13,7 +13,7 @@ def build_package(pkgname: str,
                   installdir: str,
                   buildtype: str,
                   jobs: int,
-                  force_reconfigure=False):
+                  reconfigure=False):
 
     if pkgname in _build_cache.keys():
         print(f'[{pkgname}] already built, skipping')
@@ -38,7 +38,7 @@ def build_package(pkgname: str,
 
     cmake_args = list()
     # configure
-    if not cmake.is_configured() or force_reconfigure:
+    if not cmake.is_configured() or reconfigure:
         # set install prefix and build type (only on first or forced configuration)
         cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
         cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
@@ -59,6 +59,7 @@ def build_package(pkgname: str,
     _build_cache[pkgname] = True
     return True
 
+
 # function to install one package with dependencies
 def install_package(pkg: str,
                     srcroot: str,
@@ -66,7 +67,7 @@ def install_package(pkg: str,
                     installdir: str,
                     buildtype: str,
                     jobs: int,
-                    force_reconfigure=False):
+                    reconfigure=False):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -104,7 +105,7 @@ def install_package(pkg: str,
                                installdir=installdir, 
                                buildtype=buildtype, 
                                jobs=jobs,
-                               force_reconfigure=force_reconfigure)
+                               reconfigure=reconfigure)
             if not ok:
                 print(f'[{pkg.name}] failed to build dependency {dep}')
                 return False 
@@ -142,7 +143,7 @@ def install_package(pkg: str,
                        installdir=installdir, 
                        buildtype=buildtype, 
                        jobs=jobs, 
-                       force_reconfigure=force_reconfigure)
+                       reconfigure=reconfigure)
 
     if ok:
         print(f'[{pkg.name}] ok')
@@ -195,4 +196,20 @@ def write_ws_file(rootdir):
         f.write('# forest marker file')
         return True
 
-    
+
+def write_recipes_yaml_file(rootdir):
+
+    """
+    Write a hidden file to store info where to find recipes
+    """
+
+    fname = 'recipes.yaml'
+    ws_file = os.path.join(rootdir, fname)
+
+    if os.path.exists(os.path.join(rootdir, fname)):
+        print('recipes info file already exists')
+        return False
+
+    with open(ws_file, 'w') as f:
+        f.write('# recipes info file')
+        return True

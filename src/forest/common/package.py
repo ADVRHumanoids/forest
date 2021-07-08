@@ -18,16 +18,28 @@ class Package(BasicPackage):
     """Represent a 'full' package, i.e. that can be cloned and built
     with git and cmake (for now that's all we support)
     """
+    _path = None
 
-    
-    @staticmethod
-    def get_recipe_path():
+
+    @classmethod
+    def set_recipe_path(cls, path):
+        cls._path = path
+
+    @classmethod
+    def get_recipe_path(cls):
         """
         Returns the default (and for now only) directory with recipes inside.
         This path is relative to this file's directory.
         """
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.realpath(os.path.join(this_dir, '../recipes'))
+
+        if cls._path is None:
+            raise ValueError("Recipes' folder path missing")
+
+        return cls._path
+
+
+        # this_dir = os.path.dirname(os.path.abspath(__file__))
+        # return os.path.realpath(os.path.join(this_dir, '../recipes'))
 
     @staticmethod
     def get_available_recipes() -> List[str]:
@@ -35,6 +47,9 @@ class Package(BasicPackage):
         Returns a list of available recipe names
         """
         path = Package.get_recipe_path()
+        if not os.path.isdir(path):
+            return []
+
         files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
         files = [os.path.splitext(f)[0] for f in files]
         files.sort()
