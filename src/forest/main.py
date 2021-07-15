@@ -74,17 +74,14 @@ def do_main():
 
 
     # if required, add a recipe repository to the list of remotes
-    if args.add_recipes is not None and len(args.add_recipes) != 4:
-        print(f'argument --add-recipes accepts four arguments, {len(args.add_recipes)} were passed', dest=sys.stderr)
-        return False
-
     if args.add_recipes is not None:
-        recipe.add_recipe_repository(entries=args.add_recipes)
+        if not recipe.add_recipe_repository(entries=args.add_recipes):
+            return False
 
 
     # if required, update recipes
     if args.update:
-        success = recipe.fetch_recipes_from_file(os.path.join(rootdir, 'recipes.yaml'))
+        return recipe.fetch_recipes_from_file(os.path.join(rootdir, 'recipes.yaml'))
 
     # no recipe to install, exit
     if args.recipe is None:
