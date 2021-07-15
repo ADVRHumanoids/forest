@@ -3,12 +3,31 @@ import os
 from tempfile import TemporaryDirectory
 import yaml
 import collections
+from typing import List
 
 from forest.common.package import Package
 from forest.git_tools import GitTools
 
 
+recipe_fname = 'recipes.yaml'
+
+def add_recipe_repository(entries : List[str]):
+
+    keys = ['type', 'server', 'repository', 'tag']
+    entry = dict(zip(keys, entries))
+
+    with open(recipe_fname, 'r') as f:
+        yaml_dict = yaml.safe_load(f.read())
+        if yaml_dict is None:
+            yaml_dict = list()
+        yaml_dict.append(entry)
+    
+    with open(recipe_fname, 'w') as f:
+        yaml.dump(data=yaml_dict, stream=f)
+
+
 def fetch_recipes_from_file(path):
+    
     with open(path, 'r') as f:
         yaml_dict = yaml.safe_load(f.read())
 
@@ -22,7 +41,7 @@ def fetch_recipes_from_yaml(yaml):
     for source in yaml:
         if source['type'].lower() == 'git':
             try:
-                print(f'Fetching recipes from {source["server"]+ ":" + source["repository"]}')
+                print(f'Fetching recipes from {source["server"]}: {source["repository"]} @{source["tag"]}')
                 recipes = fetch_recipes_from_git(source['server'], source['repository'], source['tag'])
 
                 # check for duplicates
@@ -32,7 +51,7 @@ def fetch_recipes_from_yaml(yaml):
                     raise ValueError(f'Trying to fetch duplicates of the same recipe: {duplicates}')   # todo: create DuplicateRecipeError
 
             except KeyError as e:
-                raise KeyError(f'.recipes.yaml git entry is missing {e.args[0]} mandatory key')
+                raise KeyError(f'recipes.yaml git entry is missing {e.args[0]} mandatory key')
 
         else:
             raise TypeError(f'Not supported type {source["type"]} for fetching recipes')
@@ -42,7 +61,7 @@ def fetch_recipes_from_git(server, repository, tag):
 
     """address: 'GIT {server}:{repository} TAG """
 
-    with TemporaryDirectory(prefix="tmake-") as tmpdir:
+    with TemporaryDirectory(prefix="forest-") as tmpdir:
         # git clone
         git_tools = GitTools(tmpdir)
         git_tools.clone(server, repository, proto='ssh')
@@ -69,3 +88,17 @@ def add_recipes(recipe_dir_path):
         recipes.append(recipe_name)
 
     return recipes
+
+
+def write_recipes_yaml_file(rootdir):
+
+    """
+    Write a hidden file to store info where to find recipes
+    """
+
+    if os.path.exists(recipe_fname):
+        return False
+
+    with open(recipe_fname, 'w') as f:
+        f.write('# recipes info file')
+        return True

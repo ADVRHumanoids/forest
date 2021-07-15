@@ -193,23 +193,6 @@ def write_ws_file(rootdir):
         return False
 
     with open(ws_file, 'w') as f:
-        f.write('# forest marker file')
+        f.write('# forest marker file \n')
         return True
 
-
-def write_recipes_yaml_file(rootdir):
-
-    """
-    Write a hidden file to store info where to find recipes
-    """
-
-    fname = 'recipes.yaml'
-    ws_file = os.path.join(rootdir, fname)
-
-    if os.path.exists(os.path.join(rootdir, fname)):
-        print('recipes info file already exists')
-        return False
-
-    with open(ws_file, 'w') as f:
-        f.write('# recipes info file')
-        return True
