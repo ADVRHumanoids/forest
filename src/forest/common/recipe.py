@@ -11,10 +11,24 @@ import sys
 from forest.common.package import Package
 from forest.git_tools import GitTools
 
-
+# the file containing recipe repositories
 recipe_fname = 'recipes.yaml'
 
 def parse_git_repository(entries : List[str]):
+
+    """
+    Parse git server and repository name from the first element
+    of the input list (entries[0]). This is expected to be the
+    full address to the git repo according to either the ssh or 
+    https format.
+
+
+    Raises:
+        ValueError: entries[0] does not match mattern
+
+    Returns:
+        str, str: server and repository
+    """
 
     gitaddr = entries[0]
     type = 'git'
@@ -31,13 +45,26 @@ def parse_git_repository(entries : List[str]):
 
     return server, repository
 
+
 def add_recipe_repository(entries : List[str]):
+
+    """
+    Add a recipe repository to the recipes.yaml file, given a list
+    of strings.
+
+    Example: for git repos, the list is [address, tag], e.g., 
+    [git@github.com:ciao/miao.git, devel]
+
+    Returns:
+        bool: true on success
+    """
 
     # for now, we only support git
     gitaddr = entries[0]
     type = 'git'
     server, repository = parse_git_repository(entries)
 
+    # entry to add to the yaml file
     entry = {
         'type': type,
         'server': server, 
@@ -46,13 +73,13 @@ def add_recipe_repository(entries : List[str]):
     }
 
     with open(recipe_fname, 'r') as f:
-        yaml_dict = yaml.safe_load(f.read())
-        if yaml_dict is None:
-            yaml_dict = list()
-        yaml_dict.append(entry)
+        yaml_list = yaml.safe_load(f.read())
+        if yaml_list is None:
+            yaml_list = list()
+        yaml_list.append(entry)
     
     with open(recipe_fname, 'w') as f:
-        yaml.dump(data=yaml_dict, stream=f)
+        yaml.dump(data=yaml_list, stream=f)
 
     return True
 
@@ -60,9 +87,9 @@ def add_recipe_repository(entries : List[str]):
 def fetch_recipes_from_file(path):
     
     with open(path, 'r') as f:
-        yaml_dict = yaml.safe_load(f.read())
+        yaml_list = yaml.safe_load(f.read())
 
-    fetch_recipes_from_yaml(yaml_dict)
+    fetch_recipes_from_yaml(yaml_list)
     return True
 
 
