@@ -18,6 +18,12 @@ class Package(BasicPackage):
     """Represent a 'full' package, i.e. that can be cloned and built
     with git and cmake (for now that's all we support)
     """
+    
+    # modes are strings that are used to conditionally add cmake args
+    # (and possibly other things, too!)
+    modes = set()
+
+    # the path to the recipe directory
     _path = None
 
 
@@ -25,6 +31,7 @@ class Package(BasicPackage):
     def set_recipe_path(cls, path):
         cls._path = path
 
+    
     @classmethod
     def get_recipe_path(cls):
         """
@@ -36,10 +43,7 @@ class Package(BasicPackage):
             raise ValueError("Recipes' folder path missing")
 
         return cls._path
-
-
-        # this_dir = os.path.dirname(os.path.abspath(__file__))
-        # return os.path.realpath(os.path.join(this_dir, '../recipes'))
+    
 
     @staticmethod
     def get_available_recipes() -> List[str]:
@@ -79,12 +83,31 @@ class Package(BasicPackage):
         """
 
         if 'clone' in yaml.keys() and 'build' in yaml.keys():
+
+            # first, parse cmake arguments
+            args = yaml['build'].get('args', list())
+            args_if = yaml['build'].get('args_if', None)
+
+            # parse conditional cmake arguments
+            if args_if is not None:
+                for k, v in args_if.items():
+
+                    # check if key is an active mode
+                    if k not in Package.modes:
+                        continue
+
+                    # extend args with all conditional args
+                    if isinstance(v, list):
+                        args.extend(v)
+                    else:
+                        args.append(v)
+                    
             return Package(name=name, 
                 server=yaml['clone']['server'],
                 repository=yaml['clone']['repository'],
                 tag=yaml['clone'].get('tag', None),
                 depends=yaml.get('depends', list()),
-                cmake_args=yaml['build'].get('args', list()),
+                cmake_args=args,
                 cmakelists=yaml['build'].get('cmakelists', ''))
         else:
             return BasicPackage(name=name, 

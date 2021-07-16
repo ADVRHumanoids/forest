@@ -45,6 +45,7 @@ def do_main():
     parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
     parser.add_argument('--add-recipes', '-a', nargs='+', required=False, help='fetch recipes from git repository; four arguments are required, i.e., <type> <server> <repo> <tag> (e.g. git github.com username/reponame.git master')
+    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -72,6 +73,13 @@ def do_main():
         # create marker file
         write_ws_file(rootdir=rootdir)  # note: error on failure?
 
+        return True
+
+    # check ws
+    if not check_ws_file(rootdir=rootdir):
+        print(f'current directory {rootdir} is not a forest workspace.. \
+have you called forest --init ?', file=sys.stderr)
+        return False
 
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
@@ -88,14 +96,12 @@ def do_main():
         print('no recipe to build, exiting..')
         return True
 
-    # check ws
-    if not check_ws_file(rootdir=rootdir):
-        print(f'current directory {rootdir} is not a forest workspace.. \
-have you called forest --init ?', file=sys.stderr)
-        return False
+    # handle modes
+    if args.mode is not None:
+        Package.modes = args.modes
 
     # print jobs
-    print(f'building {args.recipe} with {args.jobs} parallel jobs')
+    print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
 
     # perform required installation
     success = install_package(pkg=args.recipe,
