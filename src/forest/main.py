@@ -35,17 +35,17 @@ def do_main():
 
     # parse cmd line args
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
+    parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('recipe', nargs='?', choices=Package.get_available_recipes(), help='name of recipe with fetch and build information')
-    parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
+    parser.add_argument('--add-recipes', '-a', nargs='+', required=False, help='fetch recipes from git repository; four arguments are required, i.e., <type> <server> <repo> <tag> (e.g. git github.com username/reponame.git master')
     parser.add_argument('--update', '-u', required=False, action='store_true', help='update recipes')
     parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
-    parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
+    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
+    parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
     parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
-    parser.add_argument('--add-recipes', '-a', nargs='+', required=False, help='fetch recipes from git repository; four arguments are required, i.e., <type> <server> <repo> <tag> (e.g. git github.com username/reponame.git master')
-    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
