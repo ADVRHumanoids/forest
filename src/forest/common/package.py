@@ -2,7 +2,8 @@ from typing import List
 import yaml
 import os
 
-from . import fetch_handler, build_handler
+from fetch_handler import FetchHandler
+from build_handler import BuildHandler
 
 class BasicPackage:
 
@@ -14,8 +15,7 @@ class BasicPackage:
     def __init__(self, name, depends: List[str]=None) -> None:
         self.name = name 
         self.depends = depends if depends is not None else list()
-        self.fetcher = None 
-        self.builder = None
+        
 
 
 class Package(BasicPackage):
@@ -32,7 +32,12 @@ class Package(BasicPackage):
     # the path to the recipe directory
     _path = None
 
-
+    
+    def __init__(self, name, depends: List[str]) -> None:
+        super().__init__(name, depends=depends)
+        self.fetcher : FetchHandler = None 
+        self.builder : BuildHandler = None
+    
     @classmethod
     def set_recipe_path(cls, path):
         cls._path = path
@@ -65,63 +70,40 @@ class Package(BasicPackage):
         files.sort()
         return files
 
-    def __init__(self, name, server, repository, tag=None, depends=None, cmake_args=None, cmakelists='') -> None:
-        super().__init__(name, depends)
-        self.git_tag = tag
-        self.git_server = server
-        self.git_repo = repository
-        self.cmake_args = cmake_args if cmake_args is not None else list()
-        self.cmakelists = cmakelists
-        self.target = 'install'
-
 
     @staticmethod
-    def from_yaml(name, yaml):
+    def from_yaml(name, recipe) -> 'Package':
         """
         Construct a Package or BasicPackage from yaml dict
 
         Args:
             name (str): the package name
-            yaml (dict): a dictionary with package information
+            recipe (dict): a dictionary with package information
 
         Returns:
             Package: the constructed object
         """
+        fetcher = None 
+        builder = None 
 
-        if 'clone' in yaml.keys() and 'build' in yaml.keys():
+        if 'clone' in recipe.keys():
+            fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'])
 
-            # first, parse cmake arguments
-            args = yaml['build'].get('args', list())
-            args_if = yaml['build'].get('args_if', None)
+        if 'build' in recipe.keys():
+            builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'])
 
-            # parse conditional cmake arguments
-            if args_if is not None:
-                for k, v in args_if.items():
+        if fetcher is None and builder is None:
+            return BasicPackage(name=name, depends=yaml['depends'])
 
-                    # check if key is an active mode
-                    if k not in Package.modes:
-                        continue
+        pkg = Package(name=name, depends=yaml['depends'])
+        pkg.fetcher = fetcher
+        pkg.builder = builder
 
-                    # extend args with all conditional args
-                    if isinstance(v, list):
-                        args.extend(v)
-                    else:
-                        args.append(v)
-                    
-            return Package(name=name, 
-                server=yaml['clone']['server'],
-                repository=yaml['clone']['repository'],
-                tag=yaml['clone'].get('tag', None),
-                depends=yaml.get('depends', list()),
-                cmake_args=args,
-                cmakelists=yaml['build'].get('cmakelists', ''))
-        else:
-            return BasicPackage(name=name, 
-                depends=yaml['depends'])
-
+        return pkg
+        
 
     @staticmethod
-    def from_file(file):
+    def from_file(file) -> 'Package':
         """
         Construct a Package or BasicPackage from file
         """
@@ -132,7 +114,7 @@ class Package(BasicPackage):
             return Package.from_yaml(name=name, yaml=yaml_dict)
 
     @staticmethod
-    def from_name(name):
+    def from_name(name) -> 'Package':
         """
         Construct a Package or BasicPackage from its name. The recipe file
         is first fetched from the default recipe path, and the returned

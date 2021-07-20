@@ -26,38 +26,13 @@ def build_package(pkgname: str,
         print(f'[{pkgname}] recipe file not found (searched in {package.Package.get_recipe_path()})')
         return False
 
-    # source dir
+    # source dir and build dir
     srcdir = os.path.join(srcroot, pkg.name)
-
-    # create cmake tools
-    cmakelists = os.path.join(srcdir, pkg.cmakelists)
     builddir = os.path.join(buildroot, pkg.name)
-    if not os.path.exists(builddir):
-        os.mkdir(builddir)
-    cmake = CmakeTools(srcdir=cmakelists, builddir=builddir)
 
-    cmake_args = list()
-    # configure
-    if not cmake.is_configured() or reconfigure:
-        # set install prefix and build type (only on first or forced configuration)
-        cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
-        cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
-        cmake_args += pkg.cmake_args  # note: flags from recipes as last entries to allow override
-
-        print(f'[{pkg.name}] running cmake...')
-        if not cmake.configure(args=cmake_args):
-            print(f'[{pkg.name}] configuring failed')
-            return False
-
-    # build
-    print(f'[{pkg.name}] building...')
-    if not cmake.build(target=pkg.target, jobs=jobs):
-        print(f'[{pkg.name}] build failed')
-        return False 
-    
-    # save to cache and exit
-    _build_cache[pkgname] = True
-    return True
+    # doit!
+    return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir, 
+                      buildtype=buildtype, jobs=jobs, reconfigure=reconfigure)
 
 
 # function to install one package with dependencies
@@ -119,22 +94,9 @@ def install_package(pkg: str,
     # pkg is a full Package type
     pkg : package.Package = pkg
 
-    # create git tools
+    # use the fetcher!
     srcdir = os.path.join(srcroot, pkg.name)
-    git = GitTools(srcdir=srcdir)
-
-    # clone & checkout tag
-    print(f'[{pkg.name}] cloning source code ...')
-    if os.path.exists(srcdir):
-        print(f'[{pkg.name}] source code  already exists, skipping clone')
-
-    elif not git.clone(server=pkg.git_server, repository=pkg.git_repo, proto='ssh'):
-        print(f'[{pkg.name}] unable to clone source code')
-        return False
-
-    elif not git.checkout(tag=pkg.git_tag):
-        print(f'[{pkg.name}] unable to checkout tag {pkg.git_tag}')
-        return False
+    pkg.fetcher.fetch(srcdir)
     
     # configure and build
     ok = build_package(pkgname=pkg.name, 
