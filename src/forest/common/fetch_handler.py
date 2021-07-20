@@ -6,16 +6,55 @@ from forest.git_tools import GitTools
 from . import proc_utils
 
 class FetchHandler(ABC):
+    
+    """
+    Abstract interface to a fetch handler, i.e., a class that incorporates
+    the logic behind the fetching of a package's source code.
+    As an exception, we also consider this base class to describe the process
+    of fetching binary distributions such as debian packages (even though in
+    this case sources are not involved).
+    
+    Concrete instances of this class are created via the from_yaml() factory method.
+    """
 
     def __init__(self, pkgname) -> None:
+        """
+        Construct the FetchHandler
+
+        Args:
+            pkgname (str): name of the package
+        """
         self.pkgname = pkgname
 
-    @abstractmethod
+    
     def fetch(self, srcdir):
-        pass 
+        """
+        Carry out the fetch operation on the package.
+
+        Args:
+            srcdir (str): directory where sources are cloned/copied
+        """
+        print(f'[{self.pkgname}] no fetch action required')
+        return True 
 
     @classmethod
-    def from_yaml(cls, pkgname, data):
+    def from_yaml(cls, pkgname, data) -> 'FetchHandler':
+        """ 
+        Factory method to instantiate concrete fetchers given their
+        yaml description.
+
+        Args:
+            pkgname (str): name of the package
+            data (dict): the 'clone' entry of the yaml recipe, parsed 
+            into a python dictionary
+
+        Raises:
+            ValueError: the specified fetcher type is not supported
+
+        Returns:
+            FetchHandler: the requested object
+        """
+
         fetchtype = data['type']
         if fetchtype == 'git':
             return GitFetcher.from_yaml(pkgname=pkgname, data=data)
@@ -41,10 +80,10 @@ class GitFetcher(FetchHandler):
     @classmethod
     def from_yaml(cls, pkgname, data):
         return GitFetcher(pkgname=pkgname, 
-                          server=data['clone']['server'],
-                          repository=data['clone']['repository'],
-                          tag=data['clone'].get('tag', None),
-                          proto=data['clone'].get('proto', 'ssh'))
+                          server=data['server'],
+                          repository=data['repository'],
+                          tag=data.get('tag', None),
+                          proto=data.get('proto', 'ssh'))
 
 
     def fetch(self, srcdir) -> bool:
