@@ -93,7 +93,7 @@ def install_package(pkg: str,
 
         if not dep_found:
             print(f'[{pkg.name}] depends on {dep} -> not found, installing..')
-            ok = install_package(dep, srcroot, buildroot, installdir, buildtype, jobs)
+            ok = install_package(dep, srcroot, buildroot, installdir, buildtype, jobs, reconfigure)   # reconfigure needed if there's build but not install
             if not ok:
                 print(f'[{pkg.name}] failed to install dependency {dep}')
                 return False
