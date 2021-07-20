@@ -2,20 +2,26 @@ from typing import List
 import yaml
 import os
 
+from . import fetch_handler, build_handler
+
 class BasicPackage:
 
-    """Represent a package in its most basic form, i.e. a name
+    """
+    Represent a package in its most basic form, i.e. a name
     and a list of dependencies
     """
 
-    def __init__(self, name, depends:List[str]=None) -> None:
+    def __init__(self, name, depends: List[str]=None) -> None:
         self.name = name 
         self.depends = depends if depends is not None else list()
+        self.fetcher = None 
+        self.builder = None
 
 
 class Package(BasicPackage):
 
-    """Represent a 'full' package, i.e. that can be cloned and built
+    """
+    Represent a 'full' package, i.e. that can be cloned and built
     with git and cmake (for now that's all we support)
     """
     
