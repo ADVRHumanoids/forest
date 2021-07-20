@@ -32,18 +32,18 @@ def parse_git_repository(entries : List[str]):
 
     gitaddr = entries[0]
     type = 'git'
-    good_patterns = ['git@{}:{}.git', 'https://{}/{}.git']
+    good_patterns = ['git@{}:{}/{}.git', 'https://{}/{}/{}.git']
     parse_result_ssh = parse(good_patterns[0], entries[0])
     parse_result_https = parse(good_patterns[1], entries[0])
 
     if parse_result_ssh is not None:
-        server, repository = parse_result_ssh
+        server, username, repository = parse_result_ssh
     elif parse_result_https is not None:
-        server, repository = parse_result_https
+        server, username, repository = parse_result_https
     else:
         raise ValueError(f'could not parse git repository from given args {entries}')
 
-    return server, repository
+    return server, f'{username.lower()}/{repository}'
 
 
 def add_recipe_repository(entries : List[str]):
@@ -76,12 +76,22 @@ def add_recipe_repository(entries : List[str]):
         yaml_list = yaml.safe_load(f.read())
         if yaml_list is None:
             yaml_list = list()
-        yaml_list.append(entry)
+
+        add_entry_to_yaml(entry, yaml_list)
     
     with open(recipe_fname, 'w') as f:
         yaml.dump(data=yaml_list, stream=f)
 
     return True
+
+
+def add_entry_to_yaml(entry: dict, yaml_list) -> bool:
+    for yaml_entry in yaml_list:
+        if all(entry[field] == yaml_entry[field] for field in ('repository', 'tag', 'server')):
+            print(f'Entry {entry["repository"]} @{entry["tag"]} already exists')
+            return
+
+    yaml_list.append(entry)
 
 
 def fetch_recipes_from_file(path):
