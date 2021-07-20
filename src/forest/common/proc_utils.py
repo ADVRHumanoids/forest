@@ -3,19 +3,19 @@ import sys
 
 call_process_verbose = False
 
-def call_process(args, cwd='.', verbose=False, print_on_error=True):
+def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True):
 
     if verbose or call_process_verbose:
         print('calling "{}"'.format(' '.join(args)))
 
     if call_process_verbose or verbose:
-        # Popen will print output to terminal
-        proc = subprocess.Popen(args=args, cwd=cwd)
-        return proc.wait() == 0
+        # run will print output to terminal
+        proc = subprocess.run(args=args, cwd=cwd, input=input)
+        return proc.returncode == 0
 
     try:
         # check_output will not print
-        subprocess.check_output(args=args, stderr=subprocess.STDOUT, cwd=cwd)
+        subprocess.check_output(args=args, stderr=subprocess.STDOUT, cwd=cwd, input=input)
     except subprocess.CalledProcessError as e:
         # on error, print output
         if print_on_error:
