@@ -109,6 +109,9 @@ class GitFetcher(FetchHandler):
 
 class DebFetcher(FetchHandler):
 
+    # user password
+    pwd = None 
+
     def __init__(self, pkgname, debname: str) -> None:
         super().__init__(pkgname)
         # note: expand environment variables between {curly braces}
@@ -117,12 +120,15 @@ class DebFetcher(FetchHandler):
 
     
     def fetch(self, srcdir) -> bool:
-        print(f'[{self.pkgname}] installing {self.debname} from apt, type password')
-        pwd = getpass.getpass()
-        return proc_utils.call_process(args=['sudo', '-S', 'apt', 'install', '-y', self.debname], input=pwd)
+        print(f'[{self.pkgname}] installing {self.debname} from apt')
+        if DebFetcher.pwd is None:
+            pwd = getpass.getpass()
+            DebFetcher.pwd = (pwd + '\n').encode()
+        return proc_utils.call_process(args=['sudo', '-S', 'apt', 'install', '-y', self.debname], 
+                                       input=DebFetcher.pwd)
 
     
     @classmethod
     def from_yaml(cls, pkgname, data):
         return DebFetcher(pkgname=pkgname, 
-                          debname=data['clone']['debname'])
+                          debname=data['debname'])
