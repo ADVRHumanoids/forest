@@ -11,7 +11,7 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True):
     if call_process_verbose or verbose:
         # run will print output to terminal
         proc = subprocess.run(args=args, cwd=cwd, input=input)
-        return proc.returncode == 0
+        return proc.returncode == 0 
 
     try:
         # check_output will not print

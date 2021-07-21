@@ -7,24 +7,13 @@ from . import package
 
 _build_cache = dict()
 
-def build_package(pkgname: str, 
+def build_package(pkg: package.Package, 
                   srcroot: str, 
                   buildroot: str, 
                   installdir: str,
                   buildtype: str,
                   jobs: int,
                   reconfigure=False):
-
-    if pkgname in _build_cache.keys():
-        print(f'[{pkgname}] already built, skipping')
-        return True
-
-    # retrieve package info from recipe
-    try:
-        pkg = package.Package.from_name(name=pkgname)
-    except FileNotFoundError:
-        print(f'[{pkgname}] recipe file not found (searched in {package.Package.get_recipe_path()})')
-        return False
 
     # source dir and build dir
     srcdir = os.path.join(srcroot, pkg.name)
@@ -87,19 +76,12 @@ def install_package(pkg: str,
         else:
             print(f'[{pkg.name}] depends on {dep} -> found')
     
-    # if basic package, stop here
-    if not isinstance(pkg, package.Package):
-        return True
-
-    # pkg is a full Package type
-    pkg : package.Package = pkg
-
     # use the fetcher!
     srcdir = os.path.join(srcroot, pkg.name)
     pkg.fetcher.fetch(srcdir)
     
     # configure and build
-    ok = build_package(pkgname=pkg.name, 
+    ok = build_package(pkg=pkg, 
                        srcroot=srcroot, 
                        buildroot=buildroot, 
                        installdir=installdir, 
