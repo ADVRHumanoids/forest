@@ -59,7 +59,7 @@ class CmakeBuilder(BuildHandler):
     def __init__(self, pkgname, cmake_args=None, cmakelists='.') -> None:
 
         super().__init__(pkgname=pkgname)
-        self.args = cmake_args if cmake_args is not None else list()
+        self.cmake_args = cmake_args if cmake_args is not None else list()
         self.cmakelists_folder = cmakelists
         self.target = 'install'
     
