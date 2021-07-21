@@ -2,8 +2,8 @@ from typing import List
 import yaml
 import os
 
-from fetch_handler import FetchHandler
-from build_handler import BuildHandler
+from .fetch_handler import FetchHandler
+from .build_handler import BuildHandler
 
 class BasicPackage:
 
@@ -35,8 +35,8 @@ class Package(BasicPackage):
     
     def __init__(self, name, depends: List[str]) -> None:
         super().__init__(name, depends=depends)
-        self.fetcher : FetchHandler = None 
-        self.builder : BuildHandler = None
+        self.fetcher = FetchHandler(name)
+        self.builder = BuildHandler(name)
     
     @classmethod
     def set_recipe_path(cls, path):
@@ -83,21 +83,19 @@ class Package(BasicPackage):
         Returns:
             Package: the constructed object
         """
-        fetcher = None 
-        builder = None 
 
+        # dependency list if any
+        depends = recipe.get('depends', list())
+
+        # create pkg
+        pkg = Package(name=name, depends=depends)
+
+        # custom fetcher and builder if we have clone/build information
         if 'clone' in recipe.keys():
-            fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'])
+            pkg.fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'])
 
         if 'build' in recipe.keys():
-            builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'])
-
-        if fetcher is None and builder is None:
-            return BasicPackage(name=name, depends=yaml['depends'])
-
-        pkg = Package(name=name, depends=yaml['depends'])
-        pkg.fetcher = fetcher
-        pkg.builder = builder
+            pkg.builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'])
 
         return pkg
         
@@ -111,7 +109,7 @@ class Package(BasicPackage):
         name = os.path.splitext(os.path.basename(file))[0]
         with open(file, 'r') as f:
             yaml_dict = yaml.safe_load(f.read())
-            return Package.from_yaml(name=name, yaml=yaml_dict)
+            return Package.from_yaml(name=name, recipe=yaml_dict)
 
     @staticmethod
     def from_name(name) -> 'Package':
