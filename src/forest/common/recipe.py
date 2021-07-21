@@ -43,7 +43,7 @@ def parse_git_repository(entries : List[str]):
     else:
         raise ValueError(f'could not parse git repository from given args {entries}')
 
-    return server, f'{username.lower()}/{repository}'
+    return server, f'{username.lower()}/{repository.lower()}'
 
 
 def add_recipe_repository(entries : List[str]):
