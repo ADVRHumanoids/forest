@@ -78,7 +78,9 @@ def install_package(pkg: str,
     
     # use the fetcher!
     srcdir = os.path.join(srcroot, pkg.name)
-    pkg.fetcher.fetch(srcdir)
+    if not pkg.fetcher.fetch(srcdir):
+        print(f'[{pkg.name}] failed to fetch package')
+        return False 
     
     # configure and build
     ok = build_package(pkg=pkg, 

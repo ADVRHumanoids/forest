@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import os 
-import getpass 
+import getpass
+import subprocess 
 
 from forest.git_tools import GitTools
 from . import proc_utils
@@ -120,11 +121,20 @@ class DebFetcher(FetchHandler):
 
     
     def fetch(self, srcdir) -> bool:
+
+        pkg_already_installed = proc_utils.call_process(args=['dpkg', '-s', self.debname], print_on_error=False)
+
+        if pkg_already_installed:
+            print(f'[{self.pkgname}] {self.debname} already installed')
+            return True
+            
         print(f'[{self.pkgname}] installing {self.debname} from apt')
+        
         if DebFetcher.pwd is None:
             pwd = getpass.getpass()
             DebFetcher.pwd = (pwd + '\n').encode()
-        return proc_utils.call_process(args=['sudo', '-S', 'apt', 'install', '-y', self.debname], 
+
+        return proc_utils.call_process(args=['sudo', '-Sk', 'apt', 'install', '-y', self.debname], 
                                        input=DebFetcher.pwd)
 
     
