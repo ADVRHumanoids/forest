@@ -12,7 +12,7 @@ class GitTools:
             addr = f'https://{server}/{repository}'
         else:
             # TODO more specific exception
-            raise RuntimeError(f'unsupported protocol "{proto}"')
+            raise ValueError(f'unsupported protocol "{proto}"')
         
         return proc_utils.call_process(args=['git', 'clone', addr, self.srcdir])
 

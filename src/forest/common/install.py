@@ -7,7 +7,7 @@ from . import package
 
 _build_cache = dict()
 
-def build_package(pkgname: str, 
+def build_package(pkg: package.Package, 
                   srcroot: str, 
                   buildroot: str, 
                   installdir: str,
@@ -15,49 +15,14 @@ def build_package(pkgname: str,
                   jobs: int,
                   reconfigure=False):
 
-    if pkgname in _build_cache.keys():
-        print(f'[{pkgname}] already built, skipping')
-        return True
-
-    # retrieve package info from recipe
-    try:
-        pkg = package.Package.from_name(name=pkgname)
-    except FileNotFoundError:
-        print(f'[{pkgname}] recipe file not found (searched in {package.Package.get_recipe_path()})')
-        return False
-
-    # source dir
+    # source dir and build dir
     srcdir = os.path.join(srcroot, pkg.name)
-
-    # create cmake tools
-    cmakelists = os.path.join(srcdir, pkg.cmakelists)
     builddir = os.path.join(buildroot, pkg.name)
-    if not os.path.exists(builddir):
-        os.mkdir(builddir)
-    cmake = CmakeTools(srcdir=cmakelists, builddir=builddir)
 
-    cmake_args = list()
-    # configure
-    if not cmake.is_configured() or reconfigure:
-        # set install prefix and build type (only on first or forced configuration)
-        cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
-        cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
-        cmake_args += pkg.cmake_args  # note: flags from recipes as last entries to allow override
+    # doit!
+    return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir, 
+                      buildtype=buildtype, jobs=jobs, reconfigure=reconfigure)
 
-        print(f'[{pkg.name}] running cmake...')
-        if not cmake.configure(args=cmake_args):
-            print(f'[{pkg.name}] configuring failed')
-            return False
-
-    # build
-    print(f'[{pkg.name}] building...')
-    if not cmake.build(target=pkg.target, jobs=jobs):
-        print(f'[{pkg.name}] build failed')
-        return False 
-    
-    # save to cache and exit
-    _build_cache[pkgname] = True
-    return True
 
 
 # function to install one package with dependencies
@@ -92,14 +57,25 @@ def install_package(pkg: str,
         dep_builddir = os.path.join(buildroot, dep)
 
         if not dep_found:
+            # dependency not found -> install it
             print(f'[{pkg.name}] depends on {dep} -> not found, installing..')
             ok = install_package(dep, srcroot, buildroot, installdir, buildtype, jobs, reconfigure)   # reconfigure needed if there's build but not install
             if not ok:
                 print(f'[{pkg.name}] failed to install dependency {dep}')
                 return False
         elif os.path.exists(dep_builddir):
+            # dependency found and built by forest -> trigger build
             print(f'[{pkg.name}] depends on {dep} -> build found, building..')   
-            ok = build_package(pkgname=dep, 
+
+            # retrieve package info from recipe
+            try:
+                debpkg = package.Package.from_name(name=dep)
+            except FileNotFoundError:
+                print(f'[{pkg}] recipe file not found (searched in {package.Package.get_recipe_path()})')
+                return False
+            
+            # build
+            ok = build_package(pkg=debpkg, 
                                srcroot=srcroot, 
                                buildroot=buildroot, 
                                installdir=installdir, 
@@ -110,34 +86,17 @@ def install_package(pkg: str,
                 print(f'[{pkg.name}] failed to build dependency {dep}')
                 return False 
         else:
+            # dependency found and not built by forest -> nothing to do
             print(f'[{pkg.name}] depends on {dep} -> found')
     
-    # if basic package, stop here
-    if not isinstance(pkg, package.Package):
-        return True
-
-    # pkg is a full Package type
-    pkg : package.Package = pkg
-
-    # create git tools
+    # use the fetcher!
     srcdir = os.path.join(srcroot, pkg.name)
-    git = GitTools(srcdir=srcdir)
-
-    # clone & checkout tag
-    print(f'[{pkg.name}] cloning source code ...')
-    if os.path.exists(srcdir):
-        print(f'[{pkg.name}] source code  already exists, skipping clone')
-
-    elif not git.clone(server=pkg.git_server, repository=pkg.git_repo, proto='ssh'):
-        print(f'[{pkg.name}] unable to clone source code')
-        return False
-
-    elif not git.checkout(tag=pkg.git_tag):
-        print(f'[{pkg.name}] unable to checkout tag {pkg.git_tag}')
-        return False
+    if not pkg.fetcher.fetch(srcdir):
+        print(f'[{pkg.name}] failed to fetch package')
+        return False 
     
     # configure and build
-    ok = build_package(pkgname=pkg.name, 
+    ok = build_package(pkg=pkg, 
                        srcroot=srcroot, 
                        buildroot=buildroot, 
                        installdir=installdir, 

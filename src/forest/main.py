@@ -33,10 +33,15 @@ def do_main():
     # set recipe dir
     Package.set_recipe_path(recipesdir)
 
+    # available recipes
+    available_recipes = Package.get_available_recipes()
+    if len(available_recipes) == 0:
+        available_recipes = None
+
     # parse cmd line args
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
-    parser.add_argument('recipe', nargs='?', choices=Package.get_available_recipes(), help='name of recipe with fetch and build information')
+    parser.add_argument('recipe', nargs='?', choices=available_recipes, help='name of recipe with fetch and build information')
     parser.add_argument('--add-recipes', '-a', nargs=2,  metavar=('URL', 'TAG'), required=False, help='fetch recipes from git repository; two arguments are required, i.e., <url> <tag> (e.g. git@github.com:<username>/<reponame>.git master or https://github.com/<username>/<reponame>.git master')
     parser.add_argument('--update', '-u', required=False, action='store_true', help='update recipes')
     parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')

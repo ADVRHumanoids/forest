@@ -2,20 +2,26 @@ from typing import List
 import yaml
 import os
 
+from .fetch_handler import FetchHandler
+from .build_handler import BuildHandler
+
 class BasicPackage:
 
-    """Represent a package in its most basic form, i.e. a name
+    """
+    Represent a package in its most basic form, i.e. a name
     and a list of dependencies
     """
 
-    def __init__(self, name, depends:List[str]=None) -> None:
+    def __init__(self, name, depends: List[str]=None) -> None:
         self.name = name 
         self.depends = depends if depends is not None else list()
+        
 
 
 class Package(BasicPackage):
 
-    """Represent a 'full' package, i.e. that can be cloned and built
+    """
+    Represent a 'full' package, i.e. that can be cloned and built
     with git and cmake (for now that's all we support)
     """
     
@@ -26,7 +32,12 @@ class Package(BasicPackage):
     # the path to the recipe directory
     _path = None
 
-
+    
+    def __init__(self, name, depends: List[str]) -> None:
+        super().__init__(name, depends=depends)
+        self.fetcher = FetchHandler(name)
+        self.builder = BuildHandler(name)
+    
     @classmethod
     def set_recipe_path(cls, path):
         cls._path = path
@@ -59,63 +70,38 @@ class Package(BasicPackage):
         files.sort()
         return files
 
-    def __init__(self, name, server, repository, tag=None, depends=None, cmake_args=None, cmakelists='') -> None:
-        super().__init__(name, depends)
-        self.git_tag = tag
-        self.git_server = server
-        self.git_repo = repository
-        self.cmake_args = cmake_args if cmake_args is not None else list()
-        self.cmakelists = cmakelists
-        self.target = 'install'
-
 
     @staticmethod
-    def from_yaml(name, yaml):
+    def from_yaml(name, recipe) -> 'Package':
         """
         Construct a Package or BasicPackage from yaml dict
 
         Args:
             name (str): the package name
-            yaml (dict): a dictionary with package information
+            recipe (dict): a dictionary with package information
 
         Returns:
             Package: the constructed object
         """
 
-        if 'clone' in yaml.keys() and 'build' in yaml.keys():
+        # dependency list if any
+        depends = recipe.get('depends', list())
 
-            # first, parse cmake arguments
-            args = yaml['build'].get('args', list())
-            args_if = yaml['build'].get('args_if', None)
+        # create pkg
+        pkg = Package(name=name, depends=depends)
 
-            # parse conditional cmake arguments
-            if args_if is not None:
-                for k, v in args_if.items():
+        # custom fetcher and builder if we have clone/build information
+        if 'clone' in recipe.keys():
+            pkg.fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'])
 
-                    # check if key is an active mode
-                    if k not in Package.modes:
-                        continue
+        if 'build' in recipe.keys():
+            pkg.builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'])
 
-                    # extend args with all conditional args
-                    if isinstance(v, list):
-                        args.extend(v)
-                    else:
-                        args.append(v)
-                    
-            return Package(name=name, 
-                server=yaml['clone']['server'],
-                repository=yaml['clone']['repository'],
-                tag=yaml['clone'].get('tag', None),
-                depends=yaml.get('depends', list()),
-                cmake_args=args,
-                cmakelists=yaml['build'].get('cmakelists', ''))
-        else:
-            return BasicPackage(name=name, 
-                depends=yaml['depends'])
-
+        return pkg
+        
 
     @staticmethod
-    def from_file(file):
+    def from_file(file) -> 'Package':
         """
         Construct a Package or BasicPackage from file
         """
@@ -123,10 +109,10 @@ class Package(BasicPackage):
         name = os.path.splitext(os.path.basename(file))[0]
         with open(file, 'r') as f:
             yaml_dict = yaml.safe_load(f.read())
-            return Package.from_yaml(name=name, yaml=yaml_dict)
+            return Package.from_yaml(name=name, recipe=yaml_dict)
 
     @staticmethod
-    def from_name(name):
+    def from_name(name) -> 'Package':
         """
         Construct a Package or BasicPackage from its name. The recipe file
         is first fetched from the default recipe path, and the returned
