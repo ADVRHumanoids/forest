@@ -69,11 +69,11 @@ fi
 docker run $DOCKERFLAG --rm \
 --env="DISPLAY" \
 --name forest_"$DISTRO" \
--v "$(pwd)"/src:/home/user/forest/src \
--v "$(pwd)"/setup.cfg:/home/user/forest/setup.cfg \
--v "$(pwd)"/setup.py:/home/user/forest/setup.py \
--v "$(pwd)"/MANIFEST.in:/home/user/forest/MANIFEST.in \
--v "$(pwd)"/scripts/$PROFILE:/home/user/scripts \
--v $HOME/.ssh:/home/user/.ssh \
+-v "$(pwd)"/src:/root/forest/src \
+-v "$(pwd)"/setup.cfg:/root/forest/setup.cfg \
+-v "$(pwd)"/setup.py:/root/forest/setup.py \
+-v "$(pwd)"/MANIFEST.in:/root/forest/MANIFEST.in \
+-v "$(pwd)"/scripts/$PROFILE:/root/scripts \
+-v $HOME/.ssh:/root/.ssh \
 xbot:$DISTRO \
 $CMD

@@ -11,15 +11,27 @@ do
 done
 
 # -------------------------------------
-source bionic-18.04-2021_07_20_17_45_44/setup.sh
+wget http://54.73.207.169/nightly/xbot2-full-devel/bionic-nightly.tar.gz
+tar zxvpf bionic-nightly.tar.gz
+rm bionic-nightly.tar.gz
+
+cd bionic* || return 1
+./install.sh
+
+dpkg -r cartesian_interface
+dpkg -r xbot2
+
+# shellcheck source=/dev/null
+source setup.sh
 # ----------------------- TO BE REMOVED
 
-cd forest || exit
-pip3 install --user -e .
-export PATH=$PATH:/home/user/.local/bin
+cd ../forest || return 1
+# pip3 install --user -e .
+# export PATH=$PATH:/home/user/.local/bin
+pip3 install -e .   # system installation (root)
 cd ..
 mkdir xbot2_forest
-cd xbot2_forest || exit
+cd xbot2_forest || return 1
 forest --init
 source install/setup.bash
 forest --add-recipes git@github.com:MarcoRuzzon/forest-recipes.git main
