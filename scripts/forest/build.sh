@@ -1,5 +1,5 @@
+# Add all ssh keys in .ssh to ssh client agent
 eval "$(ssh-agent -s)"
-
 for f in $HOME/.ssh/*
 do
   # check extension
@@ -10,7 +10,7 @@ do
   fi
 done
 
-# -------------------------------------
+# Install Xbot2 binaries ----------------
 wget http://54.73.207.169/nightly/xbot2-full-devel/bionic-nightly.tar.gz
 tar zxvpf bionic-nightly.tar.gz
 rm bionic-nightly.tar.gz
@@ -21,11 +21,11 @@ cd bionic* || return 1
 dpkg -r cartesian_interface
 dpkg -r xbot2
 
-# shellcheck source=/dev/null
 source setup.sh
+cd ..
 # ----------------------- TO BE REMOVED
 
-cd ../forest || return 1
+cd forest || return 1
 # pip3 install --user -e .
 # export PATH=$PATH:/home/user/.local/bin
 pip3 install -e .   # system installation (root)
