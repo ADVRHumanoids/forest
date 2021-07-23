@@ -35,5 +35,4 @@ cd xbot2_forest || return 1
 forest --init
 source install/setup.bash
 forest --add-recipes git@github.com:MarcoRuzzon/forest-recipes.git main
-forest --update  # to be removed after fix --add-recipes
 forest xbot2_examples -j8

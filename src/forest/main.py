@@ -28,7 +28,7 @@ def do_main():
     srcroot = os.path.join(rootdir, 'src')
 
     # create recipes file
-    recipe.write_recipes_yaml_file(rootdir=rootdir)
+    recipe.CookBook.set_recipe_fname(rootdir, recipe_fname='recipes.yaml')
     
     # set recipe dir
     Package.set_recipe_path(recipesdir)
@@ -88,17 +88,19 @@ have you called forest --init ?', file=sys.stderr)
 
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
-        if not recipe.add_recipe_repository(entries=args.add_recipes):
+        print('adding recipes...')
+        if not recipe.CookBook.add_recipes(entries=args.add_recipes):
             return False
-
 
     # if required, update recipes
     if args.update:
-        return recipe.fetch_recipes_from_file(os.path.join(rootdir, 'recipes.yaml'))
+        print('updating recipes...')
+        if not recipe.CookBook.update_recipes():
+            return False
 
     # no recipe to install, exit
     if args.recipe is None:
-        print('no recipe to build, exiting..')
+        print('no recipe to build, exiting...')
         return True
 
     # handle modes
