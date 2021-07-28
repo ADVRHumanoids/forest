@@ -12,10 +12,13 @@ from forest.common import recipe
 # just a try-except wrapper to catch ctrl+c
 def main():
     try:
-        return do_main()
+        if not do_main():
+            print('(failed)')
+            sys.exit(1)
+        sys.exit(0)
     except KeyboardInterrupt:
         print('\nfailed (interrupted by user)')
-        return False
+        sys.exit(1)
 
 # actual main
 def do_main():
@@ -124,5 +127,4 @@ have you called forest --init ?', file=sys.stderr)
 
 
 if __name__ == '__main__':
-    # return value
-    exit(0 if main() else 1)
+    main()

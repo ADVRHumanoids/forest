@@ -11,7 +11,7 @@ def _construct(self, srcdir, builddir):
 
 def _is_configured(self):
 
-    return os.path.exists(os.path.join(self.builddir, 'CMakeCache.txt'))
+    return os.path.exists(os.path.join(self.builddir, 'Makefile'))
 
 def _configure(self, args):
 

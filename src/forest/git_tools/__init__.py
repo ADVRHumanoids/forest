@@ -14,7 +14,7 @@ class GitTools:
             # TODO more specific exception
             raise ValueError(f'unsupported protocol "{proto}"')
         
-        return proc_utils.call_process(args=['git', 'clone', addr, self.srcdir])
+        return proc_utils.call_process(args=['git', 'clone', '--recursive', addr, self.srcdir])
 
     def checkout(self, tag):
 
