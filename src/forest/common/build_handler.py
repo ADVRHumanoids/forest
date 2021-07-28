@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import os 
 
 from forest.cmake_tools import CmakeTools
-from . import package
+from . import package, eval_handler
 
 
 class BuildHandler(ABC):
@@ -72,11 +72,22 @@ class CmakeBuilder(BuildHandler):
         args_if = data.get('args_if', None)
 
         # parse conditional cmake arguments
+        eh = eval_handler.EvalHandler.instance()
         if args_if is not None:
             for k, v in args_if.items():
 
-                # check if key is an active mode
-                if k not in package.Package.modes:
+                add_arg = False
+
+                # check if key is an active mode, 
+                # or is an expression returning True
+                if k in package.Package.modes:
+                    add_arg = True
+                elif eh.eval_condition(code=k):
+                    add_arg = True
+                else:
+                    add_arg = False
+
+                if not add_arg:
                     continue
 
                 # extend args with all conditional args
