@@ -54,6 +54,7 @@ def do_main():
     buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
     parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
+    parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -66,6 +67,12 @@ def do_main():
     # print available packages
     if args.list:
         print(' '.join(Package.get_available_recipes()))
+        return True
+
+    # print available local attributes for conditional args
+    if args.list_eval_locals:
+        from forest.common import eval_handler
+        eval_handler.EvalHandler.print_available_locals()
         return True
 
     # initialize workspace
