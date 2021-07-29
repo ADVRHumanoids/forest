@@ -1,12 +1,12 @@
-from abc import ABC, abstractmethod
 import os 
 import getpass
-import subprocess 
 
 from forest.git_tools import GitTools
 from . import proc_utils
+from .print_utils import ProgressReporter
 
-class FetchHandler(ABC):
+
+class FetchHandler:
     
     """
     Abstract interface to a fetch handler, i.e., a class that incorporates
@@ -27,6 +27,9 @@ class FetchHandler(ABC):
         """
         self.pkgname = pkgname
 
+        # print function to report progress
+        self.pprint = ProgressReporter.get_print_fn(pkgname)
+
     
     def fetch(self, srcdir):
         """
@@ -35,7 +38,7 @@ class FetchHandler(ABC):
         Args:
             srcdir (str): directory where sources are cloned/copied
         """
-        print(f'[{self.pkgname}] no fetch action required')
+        self.pprint('no fetch action required')
         return True 
 
     @classmethod
@@ -90,21 +93,24 @@ class GitFetcher(FetchHandler):
 
 
     def fetch(self, srcdir) -> bool:
+        
+        # custom print shorthand
+        pprint = self.pprint
 
         # create git tools
         git = GitTools(srcdir=srcdir)
 
         # check existance
-        print(f'[{self.pkgname}] cloning source code ...')
+        pprint(f'cloning source code ...')
         if os.path.exists(srcdir):
-            print(f'[{self.pkgname}] source code  already exists, skipping clone')
+            pprint(f'source code  already exists, skipping clone')
 
         elif not git.clone(server=self.server, repository=self.repository, proto=self.proto, recursive=self.recursive):
-            print(f'[{self.pkgname}] unable to clone source code')
+            pprint(f'unable to clone source code')
             return False
 
         elif not git.checkout(tag=self.tag):
-            print(f'[{self.pkgname}] unable to checkout tag {self.tag}')
+            pprint(f'unable to checkout tag {self.tag}')
             return False
 
         return True
@@ -124,13 +130,16 @@ class DebFetcher(FetchHandler):
     
     def fetch(self, srcdir) -> bool:
 
+        # custom print shorthand
+        pprint = self.pprint
+
         pkg_already_installed = proc_utils.call_process(args=['dpkg', '-s', self.debname], print_on_error=False)
 
         if pkg_already_installed:
-            print(f'[{self.pkgname}] {self.debname} already installed')
+            pprint(f'{self.debname} already installed')
             return True
             
-        print(f'[{self.pkgname}] installing {self.debname} from apt')
+        pprint(f'installing {self.debname} from apt')
         
         if DebFetcher.pwd is None:
             pwd = getpass.getpass()

@@ -1,17 +1,21 @@
-from abc import ABC, abstractmethod
 import os 
 
 from forest.cmake_tools import CmakeTools
 from . import package, eval_handler
+from .print_utils import ProgressReporter
 
-
-class BuildHandler(ABC):
+class BuildHandler:
 
     # entries in this cache have already been built
     build_cache = set()
 
+
     def __init__(self, pkgname) -> None:
+        # pkgname
         self.pkgname = pkgname
+
+        # print function to report progress
+        self.pprint = ProgressReporter.get_print_fn(pkgname)
 
     
     def build(self, 
@@ -37,7 +41,7 @@ class BuildHandler(ABC):
             return True 
 
         BuildHandler.build_cache.add(self.pkgname)
-        print(f'[{self.pkgname}] no build action required')
+        self.pprint('no build action required')
         return True 
 
     
@@ -111,7 +115,7 @@ class CmakeBuilder(BuildHandler):
 
         # check if package in cache
         if self.pkgname in BuildHandler.build_cache:
-            print(f'[{self.pkgname}] already built, skipping')
+            self.pprint('already built, skipping')
             return True
 
         # path to folder containing cmakelists
@@ -132,15 +136,15 @@ class CmakeBuilder(BuildHandler):
             cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
             cmake_args += self.cmake_args  # note: flags from recipes as last entries to allow override
 
-            print(f'[{self.pkgname}] running cmake...')
+            self.pprint('running cmake...')
             if not cmake.configure(args=cmake_args):
-                print(f'[{self.pkgname}] configuring failed')
+                self.pprint('configuring failed')
                 return False
 
         # build
-        print(f'[{self.pkgname}] building...')
+        self.pprint('building...')
         if not cmake.build(target=self.target, jobs=jobs):
-            print(f'[{self.pkgname}] build failed')
+            self.pprint('build failed')
             return False 
         
         # save to cache and exit

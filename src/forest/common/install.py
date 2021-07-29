@@ -1,9 +1,8 @@
-from genericpath import exists
 import os
 
 from forest.cmake_tools import CmakeTools
-from forest.git_tools import GitTools
 from . import package
+from .print_utils import ProgressReporter
 
 _build_cache = dict()
 
@@ -26,13 +25,15 @@ def build_package(pkg: package.Package,
 
 
 # function to install one package with dependencies
+@ProgressReporter.count_calls
 def install_package(pkg: str,
                     srcroot: str,
                     buildroot: str,
                     installdir: str,
                     buildtype: str,
                     jobs: int,
-                    reconfigure=False):
+                    reconfigure=False, 
+                    build_only=False):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -43,57 +44,61 @@ def install_package(pkg: str,
         bool: success flag
     """
 
+    # custom print
+    pprint = ProgressReporter.get_print_fn(pkg)
+
     # retrieve package info from recipe
     try:
         pkg = package.Package.from_name(name=pkg)
     except FileNotFoundError:
-        print(f'[{pkg}] recipe file not found (searched in {package.Package.get_recipe_path()})')
+        pprint(f'recipe file not found (searched in {package.Package.get_recipe_path()})')
         return False
 
     # install dependencies if not found
     for dep in pkg.depends:
 
+        # if build only, skip the loop!
+        if build_only:
+            break
+        
+        # try to find-package this dependency
         dep_found = CmakeTools.find_package(dep)
+
+        # this dependency build directory name (if exists)
         dep_builddir = os.path.join(buildroot, dep)
 
         if not dep_found:
             # dependency not found -> install it
-            print(f'[{pkg.name}] depends on {dep} -> not found, installing..')
-            ok = install_package(dep, srcroot, buildroot, installdir, buildtype, jobs, reconfigure)   # reconfigure needed if there's build but not install
+            pprint(f'depends on {dep} -> not found, installing..')
+            
+            # note: reconfigure needed if there's build but not install
+            ok = install_package(dep, srcroot, buildroot, installdir, 
+                    buildtype, jobs, reconfigure)   
+
             if not ok:
-                print(f'[{pkg.name}] failed to install dependency {dep}')
+                pprint(f'failed to install dependency {dep}')
                 return False
+
         elif os.path.exists(dep_builddir):
             # dependency found and built by forest -> trigger build
-            print(f'[{pkg.name}] depends on {dep} -> build found, building..')   
+            pprint(f'depends on {dep} -> build found, building..')   
 
-            # retrieve package info from recipe
-            try:
-                debpkg = package.Package.from_name(name=dep)
-            except FileNotFoundError:
-                print(f'[{pkg}] recipe file not found (searched in {package.Package.get_recipe_path()})')
-                return False
-            
-            # build
-            ok = build_package(pkg=debpkg, 
-                               srcroot=srcroot, 
-                               buildroot=buildroot, 
-                               installdir=installdir, 
-                               buildtype=buildtype, 
-                               jobs=jobs,
-                               reconfigure=reconfigure)
+            ok = install_package(dep, srcroot, buildroot, installdir, 
+                    buildtype, jobs, reconfigure, build_only=True)   
+
             if not ok:
-                print(f'[{pkg.name}] failed to build dependency {dep}')
+                pprint(f'failed to build dependency {dep}')
                 return False 
         else:
             # dependency found and not built by forest -> nothing to do
-            print(f'[{pkg.name}] depends on {dep} -> found')
+            pprint(f'depends on {dep} -> found')
     
-    # use the fetcher!
-    srcdir = os.path.join(srcroot, pkg.name)
-    if not pkg.fetcher.fetch(srcdir):
-        print(f'[{pkg.name}] failed to fetch package')
-        return False 
+    # use the fetcher! (if not build only)
+    if not build_only:
+        srcdir = os.path.join(srcroot, pkg.name)
+        if not pkg.fetcher.fetch(srcdir):
+            pprint('failed to fetch package')
+            return False 
     
     # configure and build
     ok = build_package(pkg=pkg, 
@@ -105,7 +110,7 @@ def install_package(pkg: str,
                        reconfigure=reconfigure)
 
     if ok:
-        print(f'[{pkg.name}] ok')
+        pprint('ok')
 
     return ok
 
