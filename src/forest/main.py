@@ -108,7 +108,7 @@ have you called forest --init ?', file=sys.stderr)
 
     # handle modes
     if args.mode is not None:
-        Package.modes = args.modes
+        Package.modes = set(args.mode)
 
     # print jobs
     print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
