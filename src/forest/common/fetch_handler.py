@@ -119,7 +119,8 @@ class GitFetcher(FetchHandler):
 class DebFetcher(FetchHandler):
 
     # user password
-    pwd = None 
+    pwd = None
+    superuser = 'root'
 
     def __init__(self, pkgname, debname: str) -> None:
         super().__init__(pkgname)
@@ -141,7 +142,7 @@ class DebFetcher(FetchHandler):
             
         pprint(f'installing {self.debname} from apt')
         
-        if DebFetcher.pwd is None:
+        if getpass.getuser() != DebFetcher.superuser and DebFetcher.pwd is None:
             pwd = getpass.getpass()
             DebFetcher.pwd = (pwd + '\n').encode()
 
