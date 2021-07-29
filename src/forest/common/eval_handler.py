@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from forest.common import proc_utils
 
 class EvalHandler:
@@ -9,7 +9,20 @@ class EvalHandler:
 
         def __init__(self) -> None:
             self.ubuntu_release = float(proc_utils.get_output('lsb_release -rs'.split(' ')))
+            self.shell = EvalHandler.Locals.shell
+            self.env = EvalHandler.Locals.env
 
+        @staticmethod
+        def shell(cmd: str) -> str:
+            ret = proc_utils.get_output(args=[cmd], shell=True)
+            if ret is None:
+                return ''
+            else:
+                return ret
+
+        @staticmethod
+        def env(key: str) -> str:
+            return os.environ.get(key, '')
     
     def __init__(self) -> None:
         self.locals = EvalHandler.Locals()
