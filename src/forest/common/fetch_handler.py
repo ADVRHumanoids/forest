@@ -70,13 +70,14 @@ class GitFetcher(FetchHandler):
     # set this variable to override git clone protocol (e.g., to https)
     proto_override = None
     
-    def __init__(self, pkgname, server, repository, tag=None, proto='ssh') -> None:
+    def __init__(self, pkgname, server, repository, tag=None, proto='ssh', recursive=False) -> None:
 
         super().__init__(pkgname=pkgname)
         self.tag = tag
         self.server = server
         self.repository = repository
         self.proto = proto if self.proto_override is None else self.proto_override
+        self.recursive = recursive
     
     @classmethod
     def from_yaml(cls, pkgname, data):
@@ -84,7 +85,8 @@ class GitFetcher(FetchHandler):
                           server=data['server'],
                           repository=data['repository'],
                           tag=data.get('tag', None),
-                          proto=data.get('proto', 'ssh'))
+                          proto=data.get('proto', 'ssh'),
+                          recursive=data.get('recursive', False))
 
 
     def fetch(self, srcdir) -> bool:
@@ -97,7 +99,7 @@ class GitFetcher(FetchHandler):
         if os.path.exists(srcdir):
             print(f'[{self.pkgname}] source code  already exists, skipping clone')
 
-        elif not git.clone(server=self.server, repository=self.repository, proto=self.proto):
+        elif not git.clone(server=self.server, repository=self.repository, proto=self.proto, recursive=self.recursive):
             print(f'[{self.pkgname}] unable to clone source code')
             return False
 

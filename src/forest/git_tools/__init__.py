@@ -5,7 +5,7 @@ class GitTools:
     def __init__(self, srcdir) -> None:
         self.srcdir = srcdir
 
-    def clone(self, server : str, repository : str, proto='ssh'):
+    def clone(self, server: str, repository: str, proto='ssh', recursive=False):
         if proto == 'ssh':
             addr = f'git@{server}:{repository}'
         elif proto == 'https':
@@ -14,7 +14,11 @@ class GitTools:
             # TODO more specific exception
             raise ValueError(f'unsupported protocol "{proto}"')
         
-        return proc_utils.call_process(args=['git', 'clone', '--recursive', addr, self.srcdir])
+        cmd = ['git', 'clone', addr, self.srcdir]
+        if recursive:
+            cmd.insert(2, '--recursive')
+            
+        return proc_utils.call_process(args=cmd)
 
     def checkout(self, tag):
 
