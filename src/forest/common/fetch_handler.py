@@ -101,7 +101,7 @@ class GitFetcher(FetchHandler):
         git = GitTools(srcdir=srcdir)
 
         # check existance
-        pprint(f'cloning source code ...')
+        pprint(f'cloning source code ({self.proto})...')
         if os.path.exists(srcdir):
             pprint(f'source code  already exists, skipping clone')
 

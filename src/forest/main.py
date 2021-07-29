@@ -42,6 +42,8 @@ def do_main():
         available_recipes = None
 
     # parse cmd line args
+    buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
+    cloneprotos = ['ssh', 'https']
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('recipe', nargs='?', choices=available_recipes, help='name of recipe with fetch and build information')
@@ -51,10 +53,10 @@ def do_main():
     parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
-    buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
     parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
+    parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -107,6 +109,11 @@ have you called forest --init ?', file=sys.stderr)
         print('updating recipes...')
         if not recipe.CookBook.update_recipes():
             return False
+
+    # clone proto
+    if args.clone_protocol is not None:
+        from forest.common.fetch_handler import GitFetcher
+        GitFetcher.proto_override = args.clone_protocol
 
     # no recipe to install, exit
     if args.recipe is None:
