@@ -53,7 +53,11 @@ class EvalHandler:
 
     
     def eval_condition(self, code: str):
-        eval_out = eval(code, None, self.locals.__dict__)
+        try:
+            eval_out = eval(code, None, self.locals.__dict__)
+        except Exception:
+            return False
+
         if isinstance(eval_out, bool):
             return eval_out
         else:
