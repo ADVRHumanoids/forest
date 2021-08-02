@@ -1,1 +1,1 @@
-docker pull ros:melodic-desktop-full-bionic
+docker pull ros:melodic-ros-base-bionic
