@@ -12,17 +12,17 @@ do
   fi
 done
 
-# Install Xbot2 binaries ----------------
+# add xbotbuild repo to apt
+sh -c 'echo "deb http://xbot.cloud/xbot2/ubuntu/$(lsb_release -sc) /" > /etc/apt/sources.list.d/xbot-latest.list'
+wget -q -O - http://xbot.cloud/xbot2/ubuntu/KEY.gpg | apt-key add -
+apt update
+
+# Source /opt/xbot ----------------
 wget http://54.73.207.169/nightly/xbot2-full-devel/bionic-nightly.tar.gz
 tar zxvpf bionic-nightly.tar.gz
 rm bionic-nightly.tar.gz
 
 cd bionic* || return 1
-./install.sh
-
-dpkg -r cartesian_interface
-dpkg -r xbot2
-
 source setup.sh
 cd ..
 # ----------------------- TO BE REMOVED
