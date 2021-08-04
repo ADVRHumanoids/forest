@@ -17,15 +17,10 @@ sh -c 'echo "deb http://xbot.cloud/xbot2/ubuntu/$(lsb_release -sc) /" > /etc/apt
 wget -q -O - http://xbot.cloud/xbot2/ubuntu/KEY.gpg | apt-key add -
 apt update
 
-# Source /opt/xbot ----------------
-wget http://54.73.207.169/nightly/xbot2-full-devel/bionic-nightly.tar.gz
-tar zxvpf bionic-nightly.tar.gz
-rm bionic-nightly.tar.gz
+# source xbot
+apt install xbot_env
+source /opt/xbot/setup.sh
 
-cd bionic* || return 1
-source setup.sh
-cd ..
-# ----------------------- TO BE REMOVED
 
 cd forest
 # pip3 install --user -e .
@@ -37,4 +32,4 @@ cd xbot2_forest
 forest --init
 source install/setup.bash
 forest --add-recipes git@github.com:MarcoRuzzon/forest-recipes.git xbot2-desktop-full
-forest xbot2_desktop_full -j8 -v
+forest xbot2_desktop_full -j8 #-v
