@@ -18,6 +18,7 @@ wget -q -O - http://xbot.cloud/xbot2/ubuntu/KEY.gpg | apt-key add -
 apt update
 
 # source xbot
+apt install xbot_env
 source /opt/xbot/setup.sh
 
 cd forest
