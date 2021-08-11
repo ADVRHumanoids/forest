@@ -20,7 +20,7 @@ git clone -b v3.1.x_cmake git@gitlab.advr.iit.it:amargan/xenomai.git
 pushd xenomai
 ./scripts/bootstrap
 ./configure --enable-pshared --enable-tls --enable-dlopen-libs --enable-async-cancel --enable-smp
-make -j6
+make -j$(nproc)
 echo user | sudo -S make install
 popd
 
@@ -56,10 +56,10 @@ cd xbot2_forest
 forest --init
 source install/setup.bash
 forest --add-recipes git@github.com:MarcoRuzzon/forest-recipes.git xeno
-forest xbot2_examples -j6 --mode xeno -v
+forest all -j$(nproc) --mode xeno -v
 
 forest --add-recipes git@github.com:MarcoRuzzon/forest-recipes.git robots
-forest ModularBot_conda_gripper -j6 --mode xeno -v
+forest ModularBot_conda_gripper -j$(nproc) --mode xeno -v
 
 set_xbot2_config install/share/ModularBot_conda_gripper/config/ModularBot.yaml
 roscore&

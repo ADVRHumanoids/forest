@@ -67,6 +67,8 @@ fi
 
 # run the container
 docker run $DOCKERFLAG --rm \
+--privileged \
+--group-add xenomai \
 --env="DISPLAY" \
 --name forest_"$DISTRO" \
 -v "$(pwd)"/src:/home/user/forest/src \
