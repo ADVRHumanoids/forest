@@ -8,7 +8,7 @@ RUN apt install -y libelf-dev aptitude apt-file libssl-dev git-core binutils bis
     avahi-daemon nfs-common autotools-dev autoconf libfuse-dev libncurses5-dev libcap2-bin uuid-dev \
     pkg-config usbutils wireless-tools libboost-all-dev libzmq5 libyaml-cpp-dev protobuf-compiler \
     libprotobuf-dev libeigen3-dev libjsoncpp-dev libspnav-dev \
-    libtool udev
+    libtool udev gdb
 
 RUN apt-file update
 
