@@ -7,10 +7,10 @@ eval "$(ssh-agent -s)"
 for f in $HOME/.ssh/*
 do
   # check extension
-  if [ "${f: -4}" != ".pub" ] && [ "$f" != "$HOME/.ssh/known_hosts" ]
+  if [ "${f: -4}" == ".pub" ]
   then
     # take action on each file. $f store current file name
-    ssh-add "$f"
+    ssh-add "${f:0:-4}"
   fi
 done
 

@@ -6,4 +6,10 @@ sudo file build-essential cmake cmake-curses-gui openssh-client vim git python3-
 RUN pip3 install --upgrade pip
 RUN pip3 install -U setuptools
 
-WORKDIR /root
+RUN useradd -ms /bin/bash user
+RUN adduser user sudo
+RUN echo 'user:user' | chpasswd
+
+USER user
+
+WORKDIR /home/user
