@@ -1,6 +1,5 @@
 set -e   # return 1 if a command fails
 
-echo user | sudo -S chown -R user.user .ssh
 echo user | sudo -S chown -R user.user forest
 
 # Add all ssh keys in .ssh to ssh client agent
