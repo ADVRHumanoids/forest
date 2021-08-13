@@ -58,12 +58,19 @@ def do_main():
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
-    parser.add_argument('--pwd', required=False, action='store_true', help='prompt for password once at the beginning')
+    command_group = parser.add_mutually_exclusive_group()
+    command_group.add_argument('--pwd', required=False, action='store_true', help='prompt for password once at the beginning')
+    command_group.add_argument('--debug-pwd', default=None, help='')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    pwd = getpass.getpass() if args.pwd else None
+    if args.pwd:
+        pwd = getpass.getpass()
+    elif args.debug_pwd:
+        pwd = args.debug_pwd
+    else:
+        pwd = None
 
     # verbose mode will show output of any called process
     if args.verbose:

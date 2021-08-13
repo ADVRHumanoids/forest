@@ -1,7 +1,7 @@
 FROM ros:melodic-ros-base-bionic
 
 RUN apt-get update && apt-get install -y \
-sudo file build-essential cmake cmake-curses-gui openssh-client vim git python3-pip wget
+sudo file build-essential cmake cmake-curses-gui openssh-client vim git python3-pip wget expect
 
 RUN apt install -y libelf-dev aptitude apt-file libssl-dev git-core binutils bison flex bc ca-certificates libssl-dev \
     tzdata locales psmisc rsync lshw ethtool wget curl unzip ntp less vim bash-completion openssh-server \

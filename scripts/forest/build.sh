@@ -1,6 +1,6 @@
 set -e   # return 1 if a command fails
 
-echo user | sudo -S chown -R user.user forest
+echo user | sudo -Sk chown -R user.user forest
 
 # Add all ssh keys in .ssh to ssh client agent
 eval "$(ssh-agent -s)"
@@ -18,10 +18,10 @@ done
 # add xbotbuild repo to apt
 echo user | sudo -S sh -c 'echo "deb http://xbot.cloud/xbot2/ubuntu/$(lsb_release -sc) /" > /etc/apt/sources.list.d/xbot-latest.list'
 wget -q -O - http://xbot.cloud/xbot2/ubuntu/KEY.gpg | sudo apt-key add -
-echo user | sudo -S apt update
+echo user | sudo -Sk apt update
 
 # source xbot
-echo user | sudo -S apt install xbot_env
+echo user | sudo -Sk apt install xbot_env
 source /opt/xbot/setup.sh
 
 pushd forest
@@ -34,7 +34,8 @@ cd xbot2_forest
 forest --init
 source install/setup.bash
 forest --add-recipes git@github.com:MarcoRuzzon/forest-recipes.git xeno
-forest all -j$(nproc)
+forest all -j$(nproc) -v --debug-pwd user
+# expect -f $HOME/scripts/forest_all.expect $(nproc)
 
 forest --add-recipes git@github.com:MarcoRuzzon/forest-recipes.git robots
 forest ModularBot_conda_gripper -j$(nproc) -v

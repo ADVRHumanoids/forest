@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+
+# get number of cores as arg since expect interpreter does not have nproc cmd
+set nproc [lindex $argv 0]
+
+spawn forest all -j$nproc -v --pwd
+expect "Password: "
+send "user\r"
+interact eof
+# wait
