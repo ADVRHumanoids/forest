@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import getpass
 import os
 import sys
 import argcomplete
@@ -57,9 +58,12 @@ def do_main():
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
+    parser.add_argument('--pwd', required=False, action='store_true', help='prompt for password once at the beginning')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
+
+    pwd = getpass.getpass() if args.pwd else None
 
     # verbose mode will show output of any called process
     if args.verbose:
@@ -134,7 +138,8 @@ have you called forest --init ?', file=sys.stderr)
                                 installdir=installdir,
                                 buildtype=args.default_build_type,
                                 jobs=args.jobs,
-                                reconfigure=args.force_reconfigure
+                                reconfigure=args.force_reconfigure,
+                                pwd=pwd
                                 )
 
     return success

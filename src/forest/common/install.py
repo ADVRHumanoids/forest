@@ -33,7 +33,8 @@ def install_package(pkg: str,
                     buildtype: str,
                     jobs: int,
                     reconfigure=False, 
-                    build_only=False):
+                    build_only=False,
+                    pwd=None):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -73,7 +74,7 @@ def install_package(pkg: str,
             
             # note: reconfigure needed if there's build but not install
             ok = install_package(dep, srcroot, buildroot, installdir, 
-                    buildtype, jobs, reconfigure)   
+                    buildtype, jobs, reconfigure, pwd=pwd)
 
             if not ok:
                 pprint(f'failed to install dependency {dep}')
@@ -84,7 +85,7 @@ def install_package(pkg: str,
             pprint(f'depends on {dep} -> build found, building..')   
 
             ok = install_package(dep, srcroot, buildroot, installdir, 
-                    buildtype, jobs, reconfigure, build_only=True)   
+                    buildtype, jobs, reconfigure, build_only=True, pwd=pwd)
 
             if not ok:
                 pprint(f'failed to build dependency {dep}')
@@ -96,7 +97,7 @@ def install_package(pkg: str,
     # use the fetcher! (if not build only)
     if not build_only:
         srcdir = os.path.join(srcroot, pkg.name)
-        if not pkg.fetcher.fetch(srcdir):
+        if not pkg.fetcher.fetch(srcdir, pwd=pwd):
             pprint('failed to fetch package')
             return False 
     

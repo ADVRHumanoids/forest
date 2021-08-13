@@ -31,7 +31,7 @@ class FetchHandler:
         self.pprint = ProgressReporter.get_print_fn(pkgname)
 
     
-    def fetch(self, srcdir):
+    def fetch(self, srcdir, username=None, pwd=None):
         """
         Carry out the fetch operation on the package.
 
@@ -92,7 +92,7 @@ class GitFetcher(FetchHandler):
                           recursive=data.get('recursive', False))
 
 
-    def fetch(self, srcdir) -> bool:
+    def fetch(self, srcdir, username=None, pwd=None) -> bool:
         
         # custom print shorthand
         pprint = self.pprint
@@ -129,7 +129,7 @@ class DebFetcher(FetchHandler):
         self.debname = debname.format(**os.environ)
 
     
-    def fetch(self, srcdir) -> bool:
+    def fetch(self, srcdir, username=None, pwd=None) -> bool:
 
         # custom print shorthand
         pprint = self.pprint
@@ -142,12 +142,13 @@ class DebFetcher(FetchHandler):
             
         pprint(f'installing {self.debname} from apt')
         
-        if getpass.getuser() != DebFetcher.superuser and DebFetcher.pwd is None:
+        if getpass.getuser() != DebFetcher.superuser and pwd is None:
             pwd = getpass.getpass()
-            DebFetcher.pwd = (pwd + '\n').encode()
+
+        pwd = (pwd + '\n').encode()
 
         return proc_utils.call_process(args=['sudo', '-Sk', 'apt', 'install', '-y', self.debname], 
-                                       input=DebFetcher.pwd)
+                                       input=pwd)
 
     
     @classmethod
