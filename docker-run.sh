@@ -63,7 +63,7 @@ echo "Running container for profile = '$PROFILE', distro = '$DISTRO'"
 if [ "$DOCKERFLAG" = "-it" ]; then
   CMD="bash"  # if interactive mode, spawn a bash session
 else
-  CMD="./scripts/build.sh -j$JOBS -s"  # else, run the build script
+  CMD="./scripts/build.sh"  # else, run the build script
 fi
 
 
@@ -78,5 +78,6 @@ $REALTIME_FLAG \
 -v "$(pwd)"/MANIFEST.in:/home/user/forest/MANIFEST.in \
 -v "$(pwd)"/scripts/$PROFILE:/home/user/scripts \
 -v $HOME/.ssh:/home/user/.ssh \
+-t \
 xbot:$DISTRO \
 $CMD
