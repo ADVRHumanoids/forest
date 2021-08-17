@@ -32,8 +32,7 @@ echo user | sudo -Sk cp -f /usr/xenomai/etc/udev/rules.d/rtdm.rules /etc/udev/ru
 # echo user | sudo -Sk udevadm control --reload-rules 
 echo user | sudo -Sk udevadm trigger
 
-echo "export PATH=$PATH:/usr/xenomai/bin" >> .bashrc
-source .bashrc
+export PATH=$PATH:/usr/xenomai/bin
 
 
 # add xbotbuild repo to apt
