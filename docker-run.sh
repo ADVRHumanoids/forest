@@ -79,6 +79,7 @@ $REALTIME_FLAG \
 -v "$(pwd)"/scripts/$PROFILE:/home/user/scripts \
 -v $HOME/.ssh:/home/user/.ssh \
 -v /tmp/.X11-unix:/tmp/.X11-unix \
+--network host \
 -t \
 xbot:$DISTRO \
 $CMD
