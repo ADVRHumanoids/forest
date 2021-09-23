@@ -19,7 +19,7 @@ while getopts "p:d:j:ir" options; do
        ;;
     d) DISTRO=${OPTARG}
        ;;
-    r) REALTIME_FLAG="--privileged -v /dev/rtdm:/dev/rtdm"
+    r) REALTIME_FLAG="--privileged -v /dev:/dev"
        ;;
     j) JOBS=${OPTARG}
        ;;
