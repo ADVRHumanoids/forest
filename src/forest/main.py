@@ -50,8 +50,9 @@ def do_main():
     parser.add_argument('--add-recipes', '-a', nargs=2,  metavar=('URL', 'TAG'), required=False, help='fetch recipes from git repository; two arguments are required, i.e., <url> <tag> (e.g. git@github.com:<username>/<reponame>.git master or https://github.com/<username>/<reponame>.git master')
     parser.add_argument('--update', '-u', required=False, action='store_true', help='update recipes')
     parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
-    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
+    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
+    parser.add_argument('--config', '-c', nargs='+', required=False, help='specify configuration variables that can be used inside recipes')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
@@ -70,6 +71,12 @@ def do_main():
     if args.list:
         print(' '.join(Package.get_available_recipes()))
         return True
+
+    # set config vars
+    if args.config:
+        from forest.common import config_handler
+        ch = config_handler.ConfigHandler.instance()
+        ch.set_config_variables(args.config)
 
     # print available local attributes for conditional args
     if args.list_eval_locals:
