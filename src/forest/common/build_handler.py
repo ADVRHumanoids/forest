@@ -1,8 +1,9 @@
 import os 
 
 from forest.cmake_tools import CmakeTools
-from . import package, eval_handler
-from .print_utils import ProgressReporter
+from forest.common import package, eval_handler
+from forest.common.print_utils import ProgressReporter
+from forest.common import proc_utils
 
 class BuildHandler:
 
@@ -11,12 +12,25 @@ class BuildHandler:
 
 
     def __init__(self, pkgname) -> None:
+        
         # pkgname
         self.pkgname = pkgname
 
         # print function to report progress
         self.pprint = ProgressReporter.get_print_fn(pkgname)
 
+        # pre and post build commands
+        self.pre_build_cmd = list()
+        self.post_build_cmd = list()
+
+    
+    def pre_build(self, builddir):
+        for cmd in self.pre_build_cmd:
+            proc_utils.call_process(args=cmd, cwd=builddir, shell=True)
+
+    def post_build(self, builddir):
+        for cmd in self.post_build_cmd:
+            proc_utils.call_process(args=cmd, cwd=builddir, shell=True)
     
     def build(self, 
               srcdir: str, 
@@ -37,7 +51,7 @@ class BuildHandler:
             reconfigure (bool, optional): flag indicating if configuration step must be forces (cmake specific). Defaults to False.
         """
         
-        if self.pkgname is BuildHandler.build_cache:
+        if self.pkgname in BuildHandler.build_cache:
             return True 
 
         BuildHandler.build_cache.add(self.pkgname)
@@ -48,10 +62,35 @@ class BuildHandler:
     @classmethod
     def from_yaml(cls, pkgname, data, recipe):
         buildtype = data['type']
+        builder = None
+        
         if buildtype == 'cmake':
-            return CmakeBuilder.from_yaml(pkgname=pkgname, data=data)
+            builder = CmakeBuilder.from_yaml(pkgname=pkgname, data=data)
         else: 
             raise ValueError(f'unsupported build type "{buildtype}"')
+        
+        # pre and post-build (unconditional)
+        pre_build = recipe.get('pre_build', list())
+        post_build = recipe.get('post_build', list())
+
+        # conditional
+        eh = eval_handler.EvalHandler.instance()
+
+
+        pre_build_if = recipe.get('pre_build_if', dict())
+        pre_build.extend(eh.parse_conditional_dict(pre_build_if))
+        pre_build = map(eh.process_string, pre_build)
+
+        post_build_if = recipe.get('post_build_if', dict())
+        post_build.extend(eh.parse_conditional_dict(post_build_if))
+        post_build = map(eh.process_string, post_build)
+
+        print(pre_build_if)
+        # apply
+        builder.pre_build_cmd = list(pre_build)
+        builder.post_build_cmd = list(post_build)
+
+        return builder
 
 
 class CmakeBuilder(BuildHandler):
@@ -73,32 +112,14 @@ class CmakeBuilder(BuildHandler):
 
         # first, parse cmake arguments
         args = data.get('args', list())
-        args_if = data.get('args_if', None)
+        args_if = data.get('args_if', dict())
 
         # parse conditional cmake arguments
         eh = eval_handler.EvalHandler.instance()
-        if args_if is not None:
-            for k, v in args_if.items():
+        args.extend(eh.parse_conditional_dict(args_if))
 
-                add_arg = False
-
-                # check if key is an active mode, 
-                # or is an expression returning True
-                if k in package.Package.modes:
-                    add_arg = True
-                elif eh.eval_condition(code=k):
-                    add_arg = True
-                else:
-                    add_arg = False
-
-                if not add_arg:
-                    continue
-
-                # extend args with all conditional args
-                if isinstance(v, list):
-                    args.extend(v)
-                else:
-                    args.append(v)
+        # process all args through the shell
+        args = map(eh.process_string, args)
 
         return CmakeBuilder(pkgname=pkgname, 
                             cmake_args=args,
@@ -141,11 +162,17 @@ class CmakeBuilder(BuildHandler):
                 self.pprint('configuring failed')
                 return False
 
+        # pre-build
+        self.pre_build(builddir)
+
         # build
         self.pprint('building...')
         if not cmake.build(target=self.target, jobs=jobs):
             self.pprint('build failed')
             return False 
+
+        # post-build
+        self.post_build(builddir)
         
         # save to cache and exit
         BuildHandler.build_cache.add(self.pkgname)
