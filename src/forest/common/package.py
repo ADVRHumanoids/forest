@@ -92,10 +92,10 @@ class Package(BasicPackage):
 
         # custom fetcher and builder if we have clone/build information
         if 'clone' in recipe.keys():
-            pkg.fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'])
+            pkg.fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'], recipe=recipe)
 
         if 'build' in recipe.keys():
-            pkg.builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'])
+            pkg.builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'], recipe=recipe)
 
         return pkg
         

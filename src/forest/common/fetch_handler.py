@@ -42,7 +42,7 @@ class FetchHandler:
         return True 
 
     @classmethod
-    def from_yaml(cls, pkgname, data) -> 'FetchHandler':
+    def from_yaml(cls, pkgname, data, recipe) -> 'FetchHandler':
         """ 
         Factory method to instantiate concrete fetchers given their
         yaml description.

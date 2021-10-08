@@ -46,7 +46,7 @@ class BuildHandler:
 
     
     @classmethod
-    def from_yaml(cls, pkgname, data):
+    def from_yaml(cls, pkgname, data, recipe):
         buildtype = data['type']
         if buildtype == 'cmake':
             return CmakeBuilder.from_yaml(pkgname=pkgname, data=data)
