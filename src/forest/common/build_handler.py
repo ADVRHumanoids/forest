@@ -10,7 +10,6 @@ class BuildHandler:
     # entries in this cache have already been built
     build_cache = set()
 
-
     def __init__(self, pkgname) -> None:
         
         # pkgname
@@ -76,7 +75,6 @@ class BuildHandler:
         # conditional
         eh = eval_handler.EvalHandler.instance()
 
-
         pre_build_if = recipe.get('pre_build_if', dict())
         pre_build.extend(eh.parse_conditional_dict(pre_build_if))
         pre_build = map(eh.process_string, pre_build)
@@ -85,7 +83,6 @@ class BuildHandler:
         post_build.extend(eh.parse_conditional_dict(post_build_if))
         post_build = map(eh.process_string, post_build)
 
-        print(pre_build_if)
         # apply
         builder.pre_build_cmd = list(pre_build)
         builder.post_build_cmd = list(post_build)
@@ -110,12 +107,18 @@ class CmakeBuilder(BuildHandler):
     @classmethod
     def from_yaml(cls, pkgname, data):
 
+        # check if we must skip this build,
+        # and return a dummy builder if so
+        eh = eval_handler.EvalHandler.instance()
+        skip_condition = data.get('skip_if', 'False')
+        if eh.eval_condition(skip_condition):
+            return BuildHandler(pkgname=pkgname)
+
         # first, parse cmake arguments
         args = data.get('args', list())
         args_if = data.get('args_if', dict())
 
         # parse conditional cmake arguments
-        eh = eval_handler.EvalHandler.instance()
         args.extend(eh.parse_conditional_dict(args_if))
 
         # process all args through the shell
