@@ -110,7 +110,8 @@ class GitFetcher(FetchHandler):
             return False
 
         elif not git.checkout(tag=self.tag):
-            pprint(f'unable to checkout tag {self.tag}')
+            pprint(f'unable to checkout tag {self.tag}, will remove source dir')
+            git.rm()
             return False
 
         return True

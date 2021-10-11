@@ -1,4 +1,5 @@
 from forest.common import proc_utils
+import shutil
 
 class GitTools:
 
@@ -21,5 +22,8 @@ class GitTools:
         return proc_utils.call_process(args=cmd)
 
     def checkout(self, tag):
-
         return proc_utils.call_process(['git', 'checkout', tag], cwd=self.srcdir)
+
+    def rm(self):
+        shutil.rmtree(self.srcdir)
+
