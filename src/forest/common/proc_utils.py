@@ -18,9 +18,8 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, 
         return proc.returncode == 0 
 
     try:
-        # check_output will not print
-        # note that we redirect stderr to stdout!
-        subprocess.check_output(args=args, stdout=print_utils.log_file, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell)
+        # run with output/error redirection and exit status check
+        subprocess.run(args=args, stdout=print_utils.log_file, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell, check=True)
     except subprocess.CalledProcessError as e:
         # on error, print output (includes stderr)
         if print_on_error:
