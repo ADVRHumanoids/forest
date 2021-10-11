@@ -65,13 +65,17 @@ class EvalHandler:
     def eval_condition(self, code: str) -> bool:
         try:
             return bool(eval(code, None, self.locals.__dict__))
-        except Exception:
+        except BaseException as e:
+            if proc_utils.call_process_verbose:
+                print(f'failed to evaluate "{code}" with error "{str(e)}"')
             return False
 
     def format_string(self, text: str) -> str:
-        cmd_list = [fname for _, fname, _, _ in Formatter().parse(text) if fname]
-        eval_dict = {cmd: eval(cmd, None, self.locals.__dict__) for cmd in cmd_list}
-        return text.format(**self.locals.__dict__)
+        ret = text.format(**self.locals.__dict__)
+        if proc_utils.call_process_verbose:
+            print(f'formatted string "{text}" into "{ret}"')
+        return ret
+
 
     def parse_conditional_dict(self, args_if) -> List[str]:
 
