@@ -1,5 +1,6 @@
 import subprocess
 import sys 
+from forest.common import print_utils
 
 call_process_verbose = False
 
@@ -19,7 +20,7 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, 
     try:
         # check_output will not print
         # note that we redirect stderr to stdout!
-        subprocess.check_output(args=args, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell)
+        subprocess.run(args=args, stdout=print_utils.log_file, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell)
     except subprocess.CalledProcessError as e:
         # on error, print output (includes stderr)
         if print_on_error:

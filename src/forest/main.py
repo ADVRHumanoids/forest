@@ -4,6 +4,7 @@ import argparse
 import os
 import sys
 import argcomplete
+from datetime import datetime
 
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
 from forest.common.package import Package
@@ -44,6 +45,8 @@ def do_main():
     # parse cmd line args
     buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
     cloneprotos = ['ssh', 'https']
+    dfl_log_file = datetime.now().strftime("/tmp/forest_%Y_%m_%d_%H_%M_%S.log")
+
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('recipe', nargs='?', choices=available_recipes, help='name of recipe with fetch and build information')
@@ -58,6 +61,7 @@ def do_main():
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
+    parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -66,6 +70,10 @@ def do_main():
     if args.verbose:
         from forest.common import proc_utils
         proc_utils.call_process_verbose = True
+
+    if not args.verbose:
+        from forest.common import print_utils
+        print_utils.log_file = open(args.log_file, 'w')
 
     # print available packages
     if args.list:
