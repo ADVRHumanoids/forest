@@ -1,7 +1,10 @@
 import os 
+from tempfile import TemporaryDirectory
 
 from forest.cmake_tools import CmakeTools
-from forest.common import package, eval_handler
+from forest.common import eval_handler
+from forest.common import print_utils
+from forest.common.fetch_handler import CustomFetcher
 from forest.common.print_utils import ProgressReporter
 from forest.common import proc_utils
 
@@ -65,6 +68,8 @@ class BuildHandler:
         
         if buildtype == 'cmake':
             builder = CmakeBuilder.from_yaml(pkgname=pkgname, data=data)
+        elif buildtype == 'custom':
+            builder = CustomBuilder.from_yaml(pkgname=pkgname, data=data)
         else: 
             raise ValueError(f'unsupported build type "{buildtype}"')
         
@@ -90,11 +95,43 @@ class BuildHandler:
         return builder
 
 
-class CmakeBuilder(BuildHandler):
+class CustomBuilder(BuildHandler):
 
-    # set this variable to override git clone protocol (e.g., to https)
-    proto_override = None
-    
+    def __init__(self, pkgname) -> None:
+        super().__init__(pkgname)
+        self.commands = list()
+
+    def build(self, srcdir: str, builddir: str, installdir: str, buildtype: str, jobs: int, reconfigure=False) -> bool:
+        
+        # evaluator
+        eh = eval_handler.EvalHandler.instance()
+
+        # check if package in cache
+        if self.pkgname in BuildHandler.build_cache:
+            self.pprint('already built, skipping')
+            return True
+        
+        # create source folder
+        if not os.path.exists(srcdir):
+            os.mkdir(srcdir)
+
+        self.pprint('building...')
+        with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
+            for cmd in self.commands:
+                cmd_p = eh.process_string(cmd, {'srcdir': srcdir, 'installdir': installdir, 'jobs': jobs})
+                if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
+                    self.pprint(f'{cmd_p} failed')
+                    return False 
+        
+        return True 
+
+    @classmethod
+    def from_yaml(cls, pkgname, data):
+        ret = CustomBuilder(pkgname=pkgname)
+        ret.commands = list(data['cmd'])
+        return ret
+
+class CmakeBuilder(BuildHandler):
 
     def __init__(self, pkgname, cmake_args=None, cmakelists='.') -> None:
 

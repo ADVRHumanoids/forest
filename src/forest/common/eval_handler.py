@@ -70,8 +70,10 @@ class EvalHandler:
                 print(f'failed to evaluate "{code}" with error "{str(e)}"')
             return False
 
-    def format_string(self, text: str) -> str:
-        ret = text.format(**self.locals.__dict__)
+    def format_string(self, text: str, locals=None) -> str:
+        if locals is None:
+            locals = dict()
+        ret = text.format(**self.locals.__dict__, **locals)
         if proc_utils.call_process_verbose:
             print(f'formatted string "{text}" into "{ret}"')
         return ret
@@ -111,7 +113,7 @@ class EvalHandler:
         return args
 
         
-    def process_string(self, text):
+    def process_string(self, text, locals=None):
         ret = EvalHandler.echo(text)
-        ret = self.format_string(ret)
+        ret = self.format_string(ret, locals)
         return ret

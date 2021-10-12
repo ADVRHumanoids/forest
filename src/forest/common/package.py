@@ -4,6 +4,7 @@ import os
 
 from .fetch_handler import FetchHandler
 from .build_handler import BuildHandler
+from forest.common.eval_handler import EvalHandler
 
 class BasicPackage:
 
@@ -84,8 +85,13 @@ class Package(BasicPackage):
             Package: the constructed object
         """
 
+        # eval handler
+        eh = EvalHandler.instance()
+
         # dependency list if any
         depends = recipe.get('depends', list())
+        depends_if = recipe.get('depends_if', dict())
+        depends.extend(eh.parse_conditional_dict(depends_if))
 
         # create pkg
         pkg = Package(name=name, depends=depends)
