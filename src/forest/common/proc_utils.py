@@ -4,7 +4,7 @@ from forest.common import print_utils
 
 call_process_verbose = False
 
-def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False):
+def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False) -> bool:
 
     if verbose or call_process_verbose:
         if shell:
@@ -19,10 +19,12 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, 
 
     try:
         # run with output/error redirection and exit status check
-        subprocess.run(args=args, stdout=print_utils.log_file, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell, check=True)
+        pr = subprocess.run(args=args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell, check=True)
+        print_utils.log_file.write(pr.stdout.decode())
     except subprocess.CalledProcessError as e:
         # on error, print output (includes stderr)
-        if print_on_error:
+        print_utils.log_file.write(e.output.decode())
+        if print_on_error and not verbose:
             print(e.output.decode(), file=sys.stderr)
         return False
 
