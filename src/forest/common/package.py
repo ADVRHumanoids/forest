@@ -4,6 +4,7 @@ import os
 
 from .fetch_handler import FetchHandler
 from .build_handler import BuildHandler
+from forest.common.eval_handler import EvalHandler
 
 class BasicPackage:
 
@@ -84,18 +85,23 @@ class Package(BasicPackage):
             Package: the constructed object
         """
 
+        # eval handler
+        eh = EvalHandler.instance()
+
         # dependency list if any
         depends = recipe.get('depends', list())
+        depends_if = recipe.get('depends_if', dict())
+        depends.extend(eh.parse_conditional_dict(depends_if))
 
         # create pkg
         pkg = Package(name=name, depends=depends)
 
         # custom fetcher and builder if we have clone/build information
         if 'clone' in recipe.keys():
-            pkg.fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'])
+            pkg.fetcher = FetchHandler.from_yaml(pkgname=name, data=recipe['clone'], recipe=recipe)
 
         if 'build' in recipe.keys():
-            pkg.builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'])
+            pkg.builder = BuildHandler.from_yaml(pkgname=name, data=recipe['build'], recipe=recipe)
 
         return pkg
         

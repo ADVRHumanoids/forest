@@ -1,12 +1,10 @@
 import shutil
 import os
 from tempfile import TemporaryDirectory
-import typing
 import yaml
 import collections
 from typing import List
 from parse import parse
-import sys
 
 from forest.common.package import Package
 from forest.git_tools import GitTools

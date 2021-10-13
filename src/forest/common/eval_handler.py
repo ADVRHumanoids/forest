@@ -1,6 +1,10 @@
-import sys, os
+import os
 from forest.common import proc_utils
+from forest.common import config_handler
+from forest.common import package
 import inspect
+from string import Formatter
+from typing import List
 
 class EvalHandler:
 
@@ -12,6 +16,7 @@ class EvalHandler:
             self.ubuntu_release = float(proc_utils.get_output('lsb_release -rs'.split(' ')))
             self.shell = EvalHandler.Locals.shell
             self.env = EvalHandler.Locals.env
+            self.config = config_handler.ConfigHandler.instance()
 
         @staticmethod
         def shell(cmd: str) -> str:
@@ -36,6 +41,12 @@ class EvalHandler:
             cls._instance = cls()
         return cls._instance
 
+    
+    @classmethod
+    def echo(cls, text: str) -> str:
+        return proc_utils.get_output(args=['/bin/echo "' + text + '"'], shell=True)
+        
+    
     @classmethod
     def print_available_locals(cls):
 
@@ -51,16 +62,58 @@ class EvalHandler:
             
             print('{:20s} {}'.format(k, descr))
 
-    
-    def eval_condition(self, code: str):
+    def eval_condition(self, code: str) -> bool:
         try:
-            eval_out = eval(code, None, self.locals.__dict__)
-        except Exception:
+            return bool(eval(code, None, self.locals.__dict__))
+        except BaseException as e:
+            if proc_utils.call_process_verbose:
+                print(f'failed to evaluate "{code}" with error "{str(e)}"')
             return False
 
-        if isinstance(eval_out, bool):
-            return eval_out
-        else:
-            print(f'condition "{code}" evaluates to {type(eval_out)} instead of bool', 
-                dest=sys.stderr)
-            return False
+    def format_string(self, text: str, locals=None) -> str:
+        if locals is None:
+            locals = dict()
+        ret = text.format(**self.locals.__dict__, **locals)
+        if proc_utils.call_process_verbose:
+            print(f'formatted string "{text}" into "{ret}"')
+        return ret
+
+
+    def parse_conditional_dict(self, args_if) -> List[str]:
+
+        args = list()
+
+        # parse conditional cmake arguments
+        eh = EvalHandler.instance()
+        for k, v in args_if.items():
+
+            add_arg = False
+
+            # process key through the shell
+            k = self.process_string(k)
+            
+            # check if key is an active mode, 
+            # or is an expression returning True
+            if k in package.Package.modes:
+                add_arg = True
+            elif eh.eval_condition(code=k):
+                add_arg = True
+            else:
+                add_arg = False
+
+            if not add_arg:
+                continue
+
+            # extend args with all conditional args
+            if not isinstance(v, list):
+                v = [v]
+            
+            args.extend(v)
+        
+        return args
+
+        
+    def process_string(self, text, locals=None):
+        ret = EvalHandler.echo(text)
+        ret = self.format_string(ret, locals)
+        return ret

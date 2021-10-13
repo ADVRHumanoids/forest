@@ -1,10 +1,11 @@
 import os 
 import getpass
+from tempfile import TemporaryDirectory
 
 from forest.git_tools import GitTools
-from . import proc_utils
-from .print_utils import ProgressReporter
-
+from forest.common import proc_utils
+from forest.common.print_utils import ProgressReporter
+from forest.common.eval_handler import EvalHandler
 
 class FetchHandler:
     
@@ -42,7 +43,7 @@ class FetchHandler:
         return True 
 
     @classmethod
-    def from_yaml(cls, pkgname, data) -> 'FetchHandler':
+    def from_yaml(cls, pkgname, data, recipe) -> 'FetchHandler':
         """ 
         Factory method to instantiate concrete fetchers given their
         yaml description.
@@ -64,9 +65,45 @@ class FetchHandler:
             return GitFetcher.from_yaml(pkgname=pkgname, data=data)
         elif fetchtype == 'deb':
             return DebFetcher.from_yaml(pkgname=pkgname, data=data)
+        elif fetchtype == 'custom':
+            return CustomFetcher.from_yaml(pkgname=pkgname, data=data)
         else: 
             raise ValueError(f'unsupported fetch type "{fetchtype}"')
 
+
+class CustomFetcher(FetchHandler):
+
+    def __init__(self, pkgname) -> None:
+        super().__init__(pkgname)
+        self.commands = list()
+
+    def fetch(self, srcdir):
+        
+        # evaluator
+        eh = EvalHandler.instance()
+        
+        if os.path.exists(srcdir):
+            self.pprint(f'source code  already exists, skipping clone')
+            return True
+        
+        # create source folder
+        os.mkdir(srcdir)
+
+        # run commands
+        with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
+            for cmd in self.commands:
+                cmd_p = eh.process_string(cmd, {'srcdir': srcdir})
+                if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
+                    self.pprint(f'{cmd_p} failed')
+                    return False 
+        
+        return True
+
+    @classmethod
+    def from_yaml(cls, pkgname, data):
+        ret = CustomFetcher(pkgname=pkgname)
+        ret.commands = list(data['cmd'])
+        return ret
 
 class GitFetcher(FetchHandler):
 
@@ -110,7 +147,8 @@ class GitFetcher(FetchHandler):
             return False
 
         elif not git.checkout(tag=self.tag):
-            pprint(f'unable to checkout tag {self.tag}')
+            pprint(f'unable to checkout tag {self.tag}, will remove source dir')
+            git.rm()
             return False
 
         return True

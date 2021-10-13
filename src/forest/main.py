@@ -5,6 +5,7 @@ import getpass
 import os
 import sys
 import argcomplete
+from datetime import datetime
 
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
 from forest.common.package import Package
@@ -45,19 +46,23 @@ def do_main():
     # parse cmd line args
     buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
     cloneprotos = ['ssh', 'https']
+    dfl_log_file = datetime.now().strftime("/tmp/forest_%Y_%m_%d_%H_%M_%S.log")
+
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('recipe', nargs='?', choices=available_recipes, help='name of recipe with fetch and build information')
     parser.add_argument('--add-recipes', '-a', nargs=2,  metavar=('URL', 'TAG'), required=False, help='fetch recipes from git repository; two arguments are required, i.e., <url> <tag> (e.g. git@github.com:<username>/<reponame>.git master or https://github.com/<username>/<reponame>.git master')
     parser.add_argument('--update', '-u', required=False, action='store_true', help='update recipes')
     parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
-    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
+    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
+    parser.add_argument('--config', '-c', nargs='+', required=False, help='specify configuration variables that can be used inside recipes')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
+    parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
     command_group = parser.add_mutually_exclusive_group()
     command_group.add_argument('--pwd', required=False, action='store_true', help='prompt for password once at the beginning')
     command_group.add_argument('--debug-pwd', default=None, help='')
@@ -77,10 +82,20 @@ def do_main():
         from forest.common import proc_utils
         proc_utils.call_process_verbose = True
 
+    if not args.verbose:
+        from forest.common import print_utils
+        print_utils.log_file = open(args.log_file, 'w')
+
     # print available packages
     if args.list:
         print(' '.join(Package.get_available_recipes()))
         return True
+
+    # set config vars
+    if args.config:
+        from forest.common import config_handler
+        ch = config_handler.ConfigHandler.instance()
+        ch.set_config_variables(args.config)
 
     # print available local attributes for conditional args
     if args.list_eval_locals:

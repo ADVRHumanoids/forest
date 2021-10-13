@@ -34,7 +34,7 @@ def _call_cmake(args, cwd='.', print_on_error=True):
 
 def _find_package(pkg_name: str):
         
-    with TemporaryDirectory(prefix="tmake-") as tmpdir:
+    with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
 
         # dir of current file
         cmake_tools_dir = os.path.dirname(os.path.abspath(__file__))

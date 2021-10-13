@@ -1,12 +1,16 @@
 import subprocess
 import sys 
+from forest.common import print_utils
 
 call_process_verbose = False
 
-def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False):
+def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False) -> bool:
 
     if verbose or call_process_verbose:
-        print('calling "{}"'.format(' '.join(args)))
+        if shell:
+            print(f'calling shell with command "{args}"')
+        else:
+            print('calling "{}"'.format(' '.join(args)))
 
     if call_process_verbose or verbose:
         # run will print output to terminal
@@ -14,12 +18,13 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, 
         return proc.returncode == 0 
 
     try:
-        # check_output will not print
-        # note that we redirect stderr to stdout!
-        subprocess.check_output(args=args, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell)
+        # run with output/error redirection and exit status check
+        pr = subprocess.run(args=args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell, check=True)
+        print_utils.log_file.write(pr.stdout.decode())
     except subprocess.CalledProcessError as e:
         # on error, print output (includes stderr)
-        if print_on_error:
+        print_utils.log_file.write(e.output.decode())
+        if print_on_error and not verbose:
             print(e.output.decode(), file=sys.stderr)
         return False
 
@@ -29,7 +34,10 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, 
 def get_output(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False):
 
     if verbose or call_process_verbose:
-        print('calling "{}"'.format(' '.join(args)))
+        if shell:
+            print(f'calling shell with command "{args}"')
+        else:
+            print('calling "{}"'.format(' '.join(args)))
 
     try:
         # check_output will not print

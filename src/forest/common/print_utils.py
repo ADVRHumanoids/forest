@@ -1,6 +1,9 @@
 import functools
 import textwrap
 
+# this is opened in main
+log_file = None
+
 class ProgressReporter:
 
     # recursive function call counter
