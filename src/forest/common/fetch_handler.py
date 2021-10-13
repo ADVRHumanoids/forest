@@ -1,11 +1,11 @@
-import os 
-import getpass
+import os
 from tempfile import TemporaryDirectory
 
 from forest.git_tools import GitTools
 from forest.common import proc_utils
 from forest.common.print_utils import ProgressReporter
 from forest.common.eval_handler import EvalHandler
+
 
 class FetchHandler:
     
@@ -93,7 +93,9 @@ class CustomFetcher(FetchHandler):
         with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
             for cmd in self.commands:
                 cmd_p = eh.process_string(cmd, {'srcdir': srcdir})
-                if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
+
+                if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True,
+                                               input=proc_utils.get_pwd(cmd_p, pwd)):
                     self.pprint(f'{cmd_p} failed')
                     return False 
         
@@ -158,7 +160,6 @@ class DebFetcher(FetchHandler):
 
     # user password
     pwd = None
-    superuser = 'root'
 
     def __init__(self, pkgname, debname: str) -> None:
         super().__init__(pkgname)
@@ -179,14 +180,9 @@ class DebFetcher(FetchHandler):
             return True
             
         pprint(f'installing {self.debname} from apt')
-        
-        if getpass.getuser() != DebFetcher.superuser and pwd is None:
-            pwd = getpass.getpass()
 
-        pwd = (pwd + '\n').encode()
-
-        return proc_utils.call_process(args=['sudo', '-Sk', 'apt', 'install', '-y', self.debname], 
-                                       input=pwd)
+        cmd_args = ['sudo', '-Sk', 'apt', 'install', '-y', self.debname]
+        return proc_utils.call_process(args=cmd_args, input=proc_utils.get_pwd(cmd_args, pwd))
 
     
     @classmethod

@@ -12,7 +12,8 @@ def build_package(pkg: package.Package,
                   installdir: str,
                   buildtype: str,
                   jobs: int,
-                  reconfigure=False):
+                  reconfigure=False,
+                  pwd=None):
 
     # source dir and build dir
     srcdir = os.path.join(srcroot, pkg.name)
@@ -20,7 +21,7 @@ def build_package(pkg: package.Package,
 
     # doit!
     return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir, 
-                      buildtype=buildtype, jobs=jobs, reconfigure=reconfigure)
+                      buildtype=buildtype, jobs=jobs, reconfigure=reconfigure, pwd=pwd)
 
 
 
@@ -97,6 +98,8 @@ def install_package(pkg: str,
     # use the fetcher! (if not build only)
     if not build_only:
         srcdir = os.path.join(srcroot, pkg.name)
+        print('AAAAAAAAAAAAAA')
+        print(pwd)
         if not pkg.fetcher.fetch(srcdir, pwd=pwd):
             pprint('failed to fetch package')
             return False 
@@ -108,7 +111,8 @@ def install_package(pkg: str,
                        installdir=installdir, 
                        buildtype=buildtype, 
                        jobs=jobs, 
-                       reconfigure=reconfigure)
+                       reconfigure=reconfigure,
+                       pwd=pwd)
 
     if ok:
         pprint('ok')

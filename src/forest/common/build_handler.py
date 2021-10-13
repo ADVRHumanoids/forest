@@ -40,7 +40,8 @@ class BuildHandler:
               installdir: str,
               buildtype: str,
               jobs: int,
-              reconfigure=False) -> bool:
+              reconfigure=False,
+              pwd: str=None) -> bool:
         """
         Carry out the build procedure for this package.
 
@@ -101,7 +102,7 @@ class CustomBuilder(BuildHandler):
         super().__init__(pkgname)
         self.commands = list()
 
-    def build(self, srcdir: str, builddir: str, installdir: str, buildtype: str, jobs: int, reconfigure=False) -> bool:
+    def build(self, srcdir: str, builddir: str, installdir: str, buildtype: str, jobs: int, reconfigure=False, pwd: str=None) -> bool:
         
         # evaluator
         eh = eval_handler.EvalHandler.instance()
@@ -119,7 +120,10 @@ class CustomBuilder(BuildHandler):
         with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
             for cmd in self.commands:
                 cmd_p = eh.process_string(cmd, {'srcdir': srcdir, 'installdir': installdir, 'jobs': jobs})
-                if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
+
+                encoded_pwd = proc_utils.get_pwd(cmd_p, pwd)
+
+                if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True, input=encoded_pwd):
                     self.pprint(f'{cmd_p} failed')
                     return False 
 
@@ -175,7 +179,8 @@ class CmakeBuilder(BuildHandler):
               installdir: str,
               buildtype: str,
               jobs: int,
-              reconfigure=False) -> bool:
+              reconfigure=False,
+              pwd: str=None) -> bool:
 
         # check if package in cache
         if self.pkgname in BuildHandler.build_cache:
