@@ -5,6 +5,7 @@ import os
 import sys
 import argcomplete
 from datetime import datetime
+from forest.common.eval_handler import EvalHandler
 
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
 from forest.common.package import Package
@@ -137,7 +138,7 @@ have you called forest --init ?', file=sys.stderr)
 
     # handle modes
     if args.mode is not None:
-        Package.modes = set(args.mode)
+        EvalHandler.modes = set(args.mode)
 
     # print jobs
     print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
