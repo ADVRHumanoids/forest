@@ -121,7 +121,7 @@ class CustomBuilder(BuildHandler):
             for cmd in self.commands:
                 cmd_p = eh.process_string(cmd, {'srcdir': srcdir, 'installdir': installdir, 'jobs': jobs})
 
-                encoded_pwd = proc_utils.get_pwd(cmd_p, pwd)
+                cmd_p, encoded_pwd = proc_utils.get_pwd(cmd_p, pwd)
 
                 if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True, input=encoded_pwd):
                     self.pprint(f'{cmd_p} failed')

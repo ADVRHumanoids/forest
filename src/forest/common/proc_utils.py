@@ -59,22 +59,24 @@ def get_output(args, cwd='.', input=None, verbose=False, print_on_error=True, sh
 def get_pwd(cmd, pwd, superuser='root'):
     if isinstance(cmd, str):
         sudo = 'sudo ' in cmd
+        cmd = cmd.replace('sudo ', 'sudo -Sk ')
     elif isinstance(cmd, list):
         sudo = 'sudo' in cmd
+        idx = cmd.index('sudo')
+        cmd.insert(idx, '-Sk')
     else:
         raise TypeError(f'Wrong cmd type {cmd.__class__.__name__}')
 
     if sudo:
         if getpass.getuser() == superuser:
-            return None
+            return cmd, None
 
         elif pwd is not None:
-            return encode_pwd(pwd)
+            return cmd, encode_pwd(pwd)
 
         else:
-            return encode_pwd(getpass.getpass())
+            return cmd, encode_pwd(getpass.getpass())
 
 
 def encode_pwd(pwd):
-    if pwd is not None:
-        return (pwd + '\n').encode()
+    return (pwd + '\n').encode()

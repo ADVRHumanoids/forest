@@ -98,8 +98,6 @@ def install_package(pkg: str,
     # use the fetcher! (if not build only)
     if not build_only:
         srcdir = os.path.join(srcroot, pkg.name)
-        print('AAAAAAAAAAAAAA')
-        print(pwd)
         if not pkg.fetcher.fetch(srcdir, pwd=pwd):
             pprint('failed to fetch package')
             return False 

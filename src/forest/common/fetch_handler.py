@@ -94,8 +94,10 @@ class CustomFetcher(FetchHandler):
             for cmd in self.commands:
                 cmd_p = eh.process_string(cmd, {'srcdir': srcdir})
 
+                cmd_p, encoded_pwd = proc_utils.get_pwd(cmd_p, pwd)
+
                 if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True,
-                                               input=proc_utils.get_pwd(cmd_p, pwd)):
+                                               input=encoded_pwd):
                     self.pprint(f'{cmd_p} failed')
                     return False 
         
@@ -182,7 +184,7 @@ class DebFetcher(FetchHandler):
         pprint(f'installing {self.debname} from apt')
 
         cmd_args = ['sudo', '-Sk', 'apt', 'install', '-y', self.debname]
-        return proc_utils.call_process(args=cmd_args, input=proc_utils.get_pwd(cmd_args, pwd))
+        return proc_utils.call_process(args=cmd_args, input=proc_utils.get_pwd(cmd_args, pwd)[1])
 
     
     @classmethod
