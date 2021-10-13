@@ -77,7 +77,7 @@ class CustomFetcher(FetchHandler):
         super().__init__(pkgname)
         self.commands = list()
 
-    def fetch(self, srcdir):
+    def fetch(self, srcdir, username=None, pwd=None):
         
         # evaluator
         eh = EvalHandler.instance()
