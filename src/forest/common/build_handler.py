@@ -122,6 +122,9 @@ class CustomBuilder(BuildHandler):
                 if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
                     self.pprint(f'{cmd_p} failed')
                     return False 
+
+        # save to cache and exit
+        BuildHandler.build_cache.add(self.pkgname)
         
         return True 
 
