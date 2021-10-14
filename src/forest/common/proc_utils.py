@@ -80,6 +80,9 @@ def get_pwd(cmd, pwd, superuser='root'):
         else:
             return cmd, encode_pwd(getpass.getpass())
 
+    else:
+        return cmd, None
+
 
 def encode_pwd(pwd):
     return (pwd + '\n').encode()
