@@ -112,13 +112,15 @@ def install_package(pkg: str,
                        reconfigure=reconfigure,
                        pwd=pwd)
 
+    write_setup_file(installdir, overwrite=True)
+
     if ok:
         pprint('ok')
 
     return ok
 
 
-def write_setup_file(installdir):
+def write_setup_file(installdir, overwrite=False):
     
     """
     Write a setup file to the given installdir directory.
@@ -131,7 +133,7 @@ def write_setup_file(installdir):
         content = content.replace('£PREFIX£', os.path.realpath(installdir))
     
     setup_file = os.path.join(installdir, 'setup.bash')
-    if not os.path.exists(setup_file):
+    if not os.path.exists(setup_file) or overwrite:
         with open(setup_file, 'w') as f:
             f.write(content)
 
