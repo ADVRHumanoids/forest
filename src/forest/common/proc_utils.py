@@ -12,20 +12,38 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, 
         else:
             print('calling "{}"'.format(' '.join(args)))
 
+    executable = '/bin/bash' if shell else None
+
     if call_process_verbose or verbose:
         # run will print output to terminal
-        proc = subprocess.run(args=args, cwd=cwd, input=input, shell=shell)
+        proc = subprocess.run(args=args, 
+                        cwd=cwd, 
+                        input=input, 
+                        shell=shell, 
+                        executable=executable)
+
         return proc.returncode == 0 
 
     try:
         # run with output/error redirection and exit status check
-        pr = subprocess.run(args=args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd, input=input, shell=shell, check=True)
+        pr = subprocess.run(args=args, 
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.STDOUT, 
+                        cwd=cwd, 
+                        input=input, 
+                        shell=shell, 
+                        executable=executable,
+                        check=True)
+
         print_utils.log_file.write(pr.stdout.decode())
+
     except subprocess.CalledProcessError as e:
         # on error, print output (includes stderr)
         print_utils.log_file.write(e.output.decode())
+
         if print_on_error and not verbose:
             print(e.output.decode(), file=sys.stderr)
+            
         return False
 
     return True
