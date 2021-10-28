@@ -98,9 +98,6 @@ def do_main():
     # initialize workspace
     if args.init:
 
-        # create setup.bash if does not exist
-        write_setup_file(installdir=installdir)
-
         # create marker file
         write_ws_file(rootdir=rootdir)  # note: error on failure?
 
@@ -114,6 +111,9 @@ have you called forest --init ?', file=sys.stderr)
     for dir in (buildroot, installdir, srcroot, recipesdir):
         if not os.path.exists(dir):
             os.mkdir(dir)
+
+    # create setup.bash if does not exist
+    write_setup_file(installdir=installdir)
 
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
