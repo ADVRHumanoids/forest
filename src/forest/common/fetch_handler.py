@@ -1,4 +1,5 @@
 import os 
+import shutil
 import getpass
 from tempfile import TemporaryDirectory
 
@@ -95,6 +96,7 @@ class CustomFetcher(FetchHandler):
                 cmd_p = eh.process_string(cmd, {'srcdir': srcdir})
                 if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
                     self.pprint(f'{cmd_p} failed')
+                    shutil.rmtree(srcdir, ignore_errors=True)
                     return False 
         
         return True
