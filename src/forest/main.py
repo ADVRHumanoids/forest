@@ -97,10 +97,6 @@ def do_main():
 
     # initialize workspace
     if args.init:
-        # create directories
-        for dir in (buildroot, installdir, srcroot, recipesdir):
-            if not os.path.exists(dir):
-                os.mkdir(dir)
 
         # create setup.bash if does not exist
         write_setup_file(installdir=installdir)
@@ -108,13 +104,16 @@ def do_main():
         # create marker file
         write_ws_file(rootdir=rootdir)  # note: error on failure?
 
-        return True
-
     # check ws
     if not check_ws_file(rootdir=rootdir):
         print(f'current directory {rootdir} is not a forest workspace.. \
 have you called forest --init ?', file=sys.stderr)
         return False
+
+    # create directories
+    for dir in (buildroot, installdir, srcroot, recipesdir):
+        if not os.path.exists(dir):
+            os.mkdir(dir)
 
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
