@@ -20,8 +20,6 @@ def _set_default_args(args):
 
 def _configure(self, args):
 
-    print(f'default args: {default_args}')
-
     if args is None:
         args = list()
 
