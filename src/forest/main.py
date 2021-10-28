@@ -5,6 +5,7 @@ import os
 import sys
 import argcomplete
 from datetime import datetime
+from forest import cmake_tools
 from forest.common.eval_handler import EvalHandler
 
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
@@ -63,6 +64,7 @@ def do_main():
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
+    parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -139,6 +141,10 @@ have you called forest --init ?', file=sys.stderr)
     # handle modes
     if args.mode is not None:
         EvalHandler.modes = set(args.mode)
+
+    # default cmake args
+    if args.cmake_args:
+        cmake_tools.CmakeTools.set_default_args(['-D' + a for a in args.cmake_args])
 
     # print jobs
     print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')

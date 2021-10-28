@@ -1,3 +1,4 @@
+from typing import List
 
 class CmakeTools:
     
@@ -14,6 +15,11 @@ class CmakeTools:
         """
         from ._impl import _construct
         _construct(self, srcdir, builddir)
+
+    @staticmethod
+    def set_default_args(args: List[str]):
+        from ._impl import _set_default_args
+        _set_default_args(args)
 
     def is_configured(self):
         """
