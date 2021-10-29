@@ -34,6 +34,8 @@ class GitTools:
             self.rm()
             raise e
 
+        return True
+
     def checkout(self, tag):
         return proc_utils.call_process(['git', 'checkout', tag], cwd=self.srcdir)
 

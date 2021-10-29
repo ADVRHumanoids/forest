@@ -22,6 +22,8 @@ def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, 
                         shell=shell, 
                         executable=executable)
 
+        print(f'returned {proc.returncode}')
+
         return proc.returncode == 0 
 
     try:
