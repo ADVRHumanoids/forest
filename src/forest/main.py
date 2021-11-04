@@ -113,7 +113,7 @@ have you called forest --init ?', file=sys.stderr)
             os.mkdir(dir)
 
     # create setup.bash if does not exist
-    write_setup_file(installdir=installdir)
+    write_setup_file(srcdir=srcroot, installdir=installdir)
 
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
