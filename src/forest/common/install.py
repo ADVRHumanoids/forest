@@ -112,8 +112,6 @@ def install_package(pkg: str,
                        reconfigure=reconfigure,
                        pwd=pwd)
 
-    write_setup_file(installdir, overwrite=True)
-
     if ok:
         pprint('ok')
 
