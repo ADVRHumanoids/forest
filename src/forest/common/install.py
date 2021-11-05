@@ -120,10 +120,10 @@ def install_package(pkg: str,
     return ok
 
 
-def write_setup_file(installdir, overwrite=False):
+def write_setup_file(srcdir, installdir):
     
     """
-    Write a setup file to the given installdir directory.
+    Write a setup file to the root directory.
     """
 
     this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -131,9 +131,10 @@ def write_setup_file(installdir, overwrite=False):
     with open(setup_template, 'r') as f:
         content = f.read()
         content = content.replace('£PREFIX£', os.path.realpath(installdir))
+        content = content.replace('£SRCDIR£', os.path.realpath(srcdir))
     
-    setup_file = os.path.join(installdir, 'setup.bash')
-    if not os.path.exists(setup_file) or overwrite:
+    setup_file = os.path.join(installdir, '..', 'setup.bash')
+    if not os.path.exists(setup_file):
         with open(setup_file, 'w') as f:
             f.write(content)
 
@@ -141,7 +142,7 @@ def write_setup_file(installdir, overwrite=False):
 def check_ws_file(rootdir):
     
     """
-    Write a hidden file to mark the forest root directory
+    Check forest marker file exists
     """
 
     ws_file = os.path.join(rootdir, '.forest')

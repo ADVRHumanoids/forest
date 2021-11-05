@@ -26,10 +26,6 @@ class Package(BasicPackage):
     with git and cmake (for now that's all we support)
     """
     
-    # modes are strings that are used to conditionally add cmake args
-    # (and possibly other things, too!)
-    modes = set()
-
     # the path to the recipe directory
     _path = None
 

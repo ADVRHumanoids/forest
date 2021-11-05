@@ -1,14 +1,16 @@
 import os
 from forest.common import proc_utils
 from forest.common import config_handler
-from forest.common import package
 import inspect
-from string import Formatter
 from typing import List
 
 class EvalHandler:
 
     _instance = None
+
+    # modes are strings that are used to conditionally add cmake args
+    # (and possibly other things, too!)
+    modes = set()
 
     class Locals:
 
@@ -17,6 +19,11 @@ class EvalHandler:
             self.shell = EvalHandler.Locals.shell
             self.env = EvalHandler.Locals.env
             self.config = config_handler.ConfigHandler.instance()
+            self.mode = EvalHandler.Locals.mode
+
+        @staticmethod
+        def mode(mode: str) -> bool:
+            return mode in EvalHandler.modes
 
         @staticmethod
         def shell(cmd: str) -> str:
@@ -64,7 +71,9 @@ class EvalHandler:
 
     def eval_condition(self, code: str) -> bool:
         try:
-            return bool(eval(code, None, self.locals.__dict__))
+            ret = bool(eval(code, None, self.locals.__dict__))
+            if proc_utils.call_process_verbose:
+                print(f'{code} evaluated to {ret}')
         except BaseException as e:
             if proc_utils.call_process_verbose:
                 print(f'failed to evaluate "{code}" with error "{str(e)}"')
@@ -94,7 +103,7 @@ class EvalHandler:
             
             # check if key is an active mode, 
             # or is an expression returning True
-            if k in package.Package.modes:
+            if k in EvalHandler.modes:
                 add_arg = True
             elif eh.eval_condition(code=k):
                 add_arg = True

@@ -6,6 +6,8 @@ import os
 import sys
 import argcomplete
 from datetime import datetime
+from forest import cmake_tools
+from forest.common.eval_handler import EvalHandler
 
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
 from forest.common.package import Package
@@ -63,6 +65,7 @@ def do_main():
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
+    parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
     command_group = parser.add_mutually_exclusive_group()
     command_group.add_argument('--pwd', required=False, action='store_true', help='prompt for password once at the beginning')
     command_group.add_argument('--debug-pwd', default=None, help='')
@@ -105,24 +108,23 @@ def do_main():
 
     # initialize workspace
     if args.init:
-        # create directories
-        for dir in (buildroot, installdir, srcroot, recipesdir):
-            if not os.path.exists(dir):
-                os.mkdir(dir)
-
-        # create setup.bash if does not exist
-        write_setup_file(installdir=installdir)
 
         # create marker file
         write_ws_file(rootdir=rootdir)  # note: error on failure?
-
-        return True
 
     # check ws
     if not check_ws_file(rootdir=rootdir):
         print(f'current directory {rootdir} is not a forest workspace.. \
 have you called forest --init ?', file=sys.stderr)
         return False
+
+    # create directories
+    for dir in (buildroot, installdir, srcroot, recipesdir):
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
+    # create setup.bash if does not exist
+    write_setup_file(srcdir=srcroot, installdir=installdir)
 
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
@@ -148,7 +150,11 @@ have you called forest --init ?', file=sys.stderr)
 
     # handle modes
     if args.mode is not None:
-        Package.modes = set(args.mode)
+        EvalHandler.modes = set(args.mode)
+
+    # default cmake args
+    if args.cmake_args:
+        cmake_tools.CmakeTools.set_default_args(['-D' + a for a in args.cmake_args])
 
     # print jobs
     print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')

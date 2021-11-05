@@ -1,4 +1,6 @@
-import os
+import os 
+import shutil
+import getpass
 from tempfile import TemporaryDirectory
 
 from forest.git_tools import GitTools
@@ -99,6 +101,7 @@ class CustomFetcher(FetchHandler):
                 if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True,
                                                input=encoded_pwd):
                     self.pprint(f'{cmd_p} failed')
+                    shutil.rmtree(srcdir, ignore_errors=True)
                     return False 
         
         return True
