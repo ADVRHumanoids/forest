@@ -65,7 +65,8 @@ def do_main():
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
     parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
-
+    parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
+    
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 

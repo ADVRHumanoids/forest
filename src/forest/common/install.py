@@ -33,7 +33,7 @@ def install_package(pkg: str,
                     buildtype: str,
                     jobs: int,
                     reconfigure=False, 
-                    build_only=False):
+                    no_deps=False):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -57,8 +57,9 @@ def install_package(pkg: str,
     # install dependencies if not found
     for dep in pkg.depends:
 
-        # if build only, skip the loop!
-        if build_only:
+        # if no-deps mode, skip the loop!
+        if no_deps:
+            pprint('skipping dependencies')
             break
         
         # try to find-package this dependency
@@ -94,11 +95,10 @@ def install_package(pkg: str,
             pprint(f'depends on {dep} -> found')
     
     # use the fetcher! (if not build only)
-    if not build_only:
-        srcdir = os.path.join(srcroot, pkg.name)
-        if not pkg.fetcher.fetch(srcdir):
-            pprint('failed to fetch package')
-            return False 
+    srcdir = os.path.join(srcroot, pkg.name)
+    if not pkg.fetcher.fetch(srcdir):
+        pprint('failed to fetch package')
+        return False 
     
     # configure and build
     ok = build_package(pkg=pkg, 
