@@ -74,6 +74,7 @@ class EvalHandler:
             ret = bool(eval(code, None, self.locals.__dict__))
             if proc_utils.call_process_verbose:
                 print(f'{code} evaluated to {ret}')
+            return ret
         except BaseException as e:
             if proc_utils.call_process_verbose:
                 print(f'failed to evaluate "{code}" with error "{str(e)}"')
