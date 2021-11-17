@@ -138,8 +138,14 @@ class CookBook(object):
 
         git_tools = GitTools(tmpdir)
 
+        # git clone proto
+        from forest.common.fetch_handler import GitFetcher
+        proto = GitFetcher.proto_override
+        if proto is None:
+            proto = 'ssh'
+        
         # git clone
-        if not git_tools.clone(server, repository, proto='ssh'):
+        if not git_tools.clone(server, repository, proto=proto):
             return []
 
         # git checkout

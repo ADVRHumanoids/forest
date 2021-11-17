@@ -116,6 +116,12 @@ have you called forest --init ?', file=sys.stderr)
     # create setup.bash if does not exist
     write_setup_file(srcdir=srcroot, installdir=installdir)
 
+    # clone proto
+    if args.clone_protocol is not None:
+        from forest.common.fetch_handler import GitFetcher
+        GitFetcher.proto_override = args.clone_protocol
+
+
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
         print('adding recipes...')
@@ -127,11 +133,6 @@ have you called forest --init ?', file=sys.stderr)
         print('updating recipes...')
         if not recipe.CookBook.update_recipes():
             return False
-
-    # clone proto
-    if args.clone_protocol is not None:
-        from forest.common.fetch_handler import GitFetcher
-        GitFetcher.proto_override = args.clone_protocol
 
     # no recipe to install, exit
     if args.recipe is None:
