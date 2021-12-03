@@ -66,6 +66,7 @@ def do_main():
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
     parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
+    parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
     command_group = parser.add_mutually_exclusive_group()
     command_group.add_argument('--pwd', required=False, action='store_true', help='prompt for password once at the beginning')
     command_group.add_argument('--debug-pwd', default=None, help='')
@@ -126,6 +127,12 @@ have you called forest --init ?', file=sys.stderr)
     # create setup.bash if does not exist
     write_setup_file(srcdir=srcroot, installdir=installdir)
 
+    # clone proto
+    if args.clone_protocol is not None:
+        from forest.common.fetch_handler import GitFetcher
+        GitFetcher.proto_override = args.clone_protocol
+
+
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
         print('adding recipes...')
@@ -137,11 +144,6 @@ have you called forest --init ?', file=sys.stderr)
         print('updating recipes...')
         if not recipe.CookBook.update_recipes():
             return False
-
-    # clone proto
-    if args.clone_protocol is not None:
-        from forest.common.fetch_handler import GitFetcher
-        GitFetcher.proto_override = args.clone_protocol
 
     # no recipe to install, exit
     if args.recipe is None:

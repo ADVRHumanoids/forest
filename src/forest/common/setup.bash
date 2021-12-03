@@ -6,3 +6,4 @@ export GAZEBO_PLUGIN_PATH=£PREFIX£/lib:$GAZEBO_PLUGIN_PATH
 export PYTHONPATH=£PREFIX£/lib/python2.7/dist-packages:£PREFIX£/lib/python3/dist-packages:$PYTHONPATH
 export PYTHONPATH=£PREFIX£/lib/python3/site-packages:$PYTHONPATH
 export ROS_PACKAGE_PATH=£SRCDIR£/:£PREFIX£/share:£PREFIX£/lib:$ROS_PACKAGE_PATH
+export PKG_CONFIG_PATH=£PREFIX£/lib/pkgconfig:$PKG_CONFIG_PATH
