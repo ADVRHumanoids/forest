@@ -17,7 +17,7 @@ class CookBook(object):
     recipe_fname = None
 
     @classmethod
-    def set_recipe_fname(cls, rootdir, recipe_fname='recipes.yaml'):
+    def write_recipe_file(cls, rootdir, recipe_fname='recipes.yaml'):
         """
         Write a hidden file to store info where to find recipes
         """
@@ -25,7 +25,7 @@ class CookBook(object):
         fname = os.path.join(rootdir, recipe_fname)
         cls.recipe_fname = fname
         if os.path.exists(fname):
-            return False
+            return True
 
         with open(fname, 'w') as f:
             f.write('# recipes info file')

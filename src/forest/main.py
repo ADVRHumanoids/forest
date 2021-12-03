@@ -33,9 +33,6 @@ def do_main():
     buildroot = os.path.join(rootdir, 'build')
     installdir = os.path.join(rootdir, 'install')
     srcroot = os.path.join(rootdir, 'src')
-
-    # create recipes file
-    recipe.CookBook.set_recipe_fname(rootdir, recipe_fname='recipes.yaml')
     
     # set recipe dir
     Package.set_recipe_path(recipesdir)
@@ -118,6 +115,9 @@ def do_main():
         print(f'current directory {rootdir} is not a forest workspace.. \
 have you called forest --init ?', file=sys.stderr)
         return False
+
+    # create recipes file if doesn't exists
+    recipe.CookBook.write_recipe_file(rootdir, recipe_fname='recipes.yaml')
 
     # create directories
     for dir in (buildroot, installdir, srcroot, recipesdir):
