@@ -165,6 +165,7 @@ class DebFetcher(FetchHandler):
 
     # user password
     pwd = None
+    superuser = 'root'
 
     def __init__(self, pkgname, debname: str) -> None:
         super().__init__(pkgname)
