@@ -12,6 +12,7 @@ from forest.common.eval_handler import EvalHandler
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
 from forest.common.package import Package
 from forest.common import recipe
+from pprint import pprint
 
 # just a try-except wrapper to catch ctrl+c
 def main():
@@ -65,18 +66,11 @@ def do_main():
     parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
     parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
     command_group = parser.add_mutually_exclusive_group()
-    command_group.add_argument('--pwd', required=False, action='store_true', help='prompt for password once at the beginning')
+    command_group.add_argument('--no-pwd', required=False, action='store_true', help='do not prompt for password at the beginning')
     command_group.add_argument('--debug-pwd', default=None, help='')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-
-    if args.pwd:
-        pwd = getpass.getpass()
-    elif args.debug_pwd:
-        pwd = args.debug_pwd
-    else:
-        pwd = None
 
     # verbose mode will show output of any called process
     if args.verbose:
@@ -160,6 +154,14 @@ have you called forest --init ?', file=sys.stderr)
 
     # print jobs
     print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
+
+    if args.no_pwd:
+        pwd = None
+    elif args.debug_pwd:
+        pwd = args.debug_pwd
+    else:
+        pwd = getpass.getpass()
+        pprint('got password!')
 
     # perform required installation
     success = install_package(pkg=args.recipe,
