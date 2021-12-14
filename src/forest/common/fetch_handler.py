@@ -187,7 +187,7 @@ class DebFetcher(FetchHandler):
         pprint(f'installing {self.debname} from apt')
 
         if getpass.getuser() != DebFetcher.superuser and pwd is None:
-            pwd = (getpass.getpass() + '\n').encode()
+            pwd = getpass.getpass()
             pprint('got password!')
 
         cmd_args = ['sudo', '-Sk', 'apt', 'install', '-y', self.debname]
