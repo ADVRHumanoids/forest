@@ -161,22 +161,25 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
     if fname == installdir:
         return True
 
-    pprint(f'removing:  {fname}', end="")
-    cmd = ['rm', '-r', fname]
-    ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
-    if ok:
-        print(' --> done')
-        dirname = os.path.split(fname)[0]
-        if len(os.listdir(dirname)) == 0:
-            return _remove_fname(pkg, dirname, installdir, verbose)
+    if not os.path.exists(fname):
+        pprint(f'removing:  {fname} --> no such file or directory')
+        fname = os.path.split(fname)[0]
+        return _remove_fname(pkg, fname, installdir, verbose)
 
-        return True
+    elif not os.path.isdir(fname) or len(os.listdir(fname)) == 0:
+        pprint(f'removing:  {fname}', end="")
+        cmd = ['rm', '-r', fname]
+        ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+        if ok:
+            print(' --> done')
+            fname = os.path.split(fname)[0]
+            return _remove_fname(pkg, fname, installdir, verbose)
 
-    else:
-        print(' --> error')
-        return False
+        else:
+            print(' --> error removing file or directory')
+            return False
 
-
+    return True
 
 
 def write_setup_file(srcdir, installdir):
