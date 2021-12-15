@@ -148,6 +148,7 @@ have you called forest --init ?', file=sys.stderr)
     if args.uninstall:
         return uninstall_package(pkg=args.recipe,
                                  buildroot=buildroot,
+                                 installdir=installdir,
                                  verbose=args.verbose)
 
     # handle modes

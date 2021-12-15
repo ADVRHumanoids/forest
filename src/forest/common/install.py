@@ -120,6 +120,7 @@ def install_package(pkg: str,
 
 def uninstall_package(pkg: str,
                       buildroot: str,
+                      installdir: str,
                       verbose: bool):
 
     # custom print
@@ -137,24 +138,45 @@ def uninstall_package(pkg: str,
         pprint(f'missing install_manifest.txt: {manifest_fname}')
         return False
 
-    success = True
+    error = False
     with open(manifest_fname, 'r') as manifest:
         for file in manifest.readlines():
             fname = str(file).rstrip()
-            pprint(f'uninstalling:  {fname}', end="")
-            cmd = ['rm',  fname]
-            ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
-            if ok:
-                print(' --> done')
+            if not _remove_fname(pkg.name, fname, installdir, verbose):
+                error = True
 
-            else:
-                success = False
-                print(' --> error')
-
-    if success:
+    if not error:
         pprint('uninstalled successfully')
+        return True
 
-    return success
+    pprint('errors occurred during uninstallation')
+    return False
+
+
+def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
+
+    # custom print
+    pprint = ProgressReporter.get_print_fn(pkg)
+
+    if fname == installdir:
+        return True
+
+    pprint(f'removing:  {fname}', end="")
+    cmd = ['rm', '-r', fname]
+    ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+    if ok:
+        print(' --> done')
+        dirname = os.path.split(fname)[0]
+        if len(os.listdir(dirname)) == 0:
+            return _remove_fname(pkg, dirname, installdir, verbose)
+
+        return True
+
+    else:
+        print(' --> error')
+        return False
+
+
 
 
 def write_setup_file(srcdir, installdir):
