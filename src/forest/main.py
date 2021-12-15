@@ -147,7 +147,8 @@ have you called forest --init ?', file=sys.stderr)
 
     if args.uninstall:
         return uninstall_package(pkg=args.recipe,
-                                 buildroot=buildroot)
+                                 buildroot=buildroot,
+                                 verbose=args.verbose)
 
     # handle modes
     if args.mode is not None:

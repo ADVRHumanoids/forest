@@ -119,7 +119,8 @@ def install_package(pkg: str,
 
 
 def uninstall_package(pkg: str,
-                      buildroot: str):
+                      buildroot: str,
+                      verbose: bool):
 
     # custom print
     pprint = ProgressReporter.get_print_fn(pkg)
@@ -131,20 +132,29 @@ def uninstall_package(pkg: str,
         return False
 
     builddir = os.path.join(buildroot, pkg.name)
-    manifest = os.path.join(builddir, 'install_manifest.txt')
-    if not os.path.isfile(manifest):
-        pprint(f'missing install_manifest.txt: {manifest}')
+    manifest_fname = os.path.join(builddir, 'install_manifest.txt')
+    if not os.path.isfile(manifest_fname):
+        pprint(f'missing install_manifest.txt: {manifest_fname}')
         return False
 
-    with open(manifest, 'r') as f:
-        pprint(f'uninstalling:\n{f.read()}')
+    success = True
+    with open(manifest_fname, 'r') as manifest:
+        for file in manifest.readlines():
+            fname = str(file).rstrip()
+            pprint(f'uninstalling:  {fname}', end="")
+            cmd = ['rm',  fname]
+            ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+            if ok:
+                print(' --> done')
 
-    cmd = ['xargs', 'rm', '<',  manifest]
-    ok = proc_utils.call_process(args=cmd)
-    if ok:
-        pprint('ok')
+            else:
+                success = False
+                print(' --> error')
 
-    return ok
+    if success:
+        pprint('uninstalled successfully')
+
+    return success
 
 
 def write_setup_file(srcdir, installdir):
