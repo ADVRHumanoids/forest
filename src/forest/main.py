@@ -9,7 +9,7 @@ from datetime import datetime
 from forest import cmake_tools
 from forest.common.eval_handler import EvalHandler
 
-from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
+from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file, uninstall_package
 from forest.common.package import Package
 from forest.common import recipe
 from pprint import pprint
@@ -68,6 +68,7 @@ def do_main():
     command_group = parser.add_mutually_exclusive_group()
     command_group.add_argument('--no-pwd', required=False, action='store_true', help='do not prompt for password at the beginning')
     command_group.add_argument('--debug-pwd', default=None, help='')
+    parser.add_argument('--uninstall', required=False, action='store_true', help='uninstall recipe')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -144,6 +145,10 @@ have you called forest --init ?', file=sys.stderr)
         print('no recipe to build, exiting...')
         return True
 
+    if args.uninstall:
+        return uninstall_package(pkg=args.recipe,
+                                 buildroot=buildroot)
+
     # handle modes
     if args.mode is not None:
         EvalHandler.modes = set(args.mode)
@@ -165,14 +170,14 @@ have you called forest --init ?', file=sys.stderr)
 
     # perform required installation
     success = install_package(pkg=args.recipe,
-                                srcroot=srcroot,
-                                buildroot=buildroot,
-                                installdir=installdir,
-                                buildtype=args.default_build_type,
-                                jobs=args.jobs,
-                                reconfigure=args.force_reconfigure,
-                                pwd=pwd
-                                )
+                              srcroot=srcroot,
+                              buildroot=buildroot,
+                              installdir=installdir,
+                              buildtype=args.default_build_type,
+                              jobs=args.jobs,
+                              reconfigure=args.force_reconfigure,
+                              pwd=pwd
+                              )
 
     return success
 

@@ -3,6 +3,7 @@ import os
 from forest.cmake_tools import CmakeTools
 from . import package
 from .print_utils import ProgressReporter
+from forest.common import proc_utils
 
 _build_cache = dict()
 
@@ -20,7 +21,7 @@ def build_package(pkg: package.Package,
     builddir = os.path.join(buildroot, pkg.name)
 
     # doit!
-    return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir, 
+    return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir,
                       buildtype=buildtype, jobs=jobs, reconfigure=reconfigure, pwd=pwd)
 
 
@@ -111,6 +112,35 @@ def install_package(pkg: str,
                        reconfigure=reconfigure,
                        pwd=pwd)
 
+    if ok:
+        pprint('ok')
+
+    return ok
+
+
+def uninstall_package(pkg: str,
+                      buildroot: str):
+
+    # custom print
+    pprint = ProgressReporter.get_print_fn(pkg)
+
+    try:
+        pkg = package.Package.from_name(name=pkg)
+    except FileNotFoundError:
+        pprint(f'recipe file not found (searched in {package.Package.get_recipe_path()})')
+        return False
+
+    builddir = os.path.join(buildroot, pkg.name)
+    manifest = os.path.join(builddir, 'install_manifest.txt')
+    if not os.path.isfile(manifest):
+        pprint(f'missing install_manifest.txt: {manifest}')
+        return False
+
+    with open(manifest, 'r') as f:
+        pprint(f'uninstalling:\n{f.read()}')
+
+    cmd = ['xargs', 'rm', '<',  manifest]
+    ok = proc_utils.call_process(args=cmd)
     if ok:
         pprint('ok')
 
