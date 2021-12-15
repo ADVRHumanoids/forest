@@ -131,13 +131,13 @@ have you called forest --init ?', file=sys.stderr)
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
         print('adding recipes...')
-        if not recipe.CookBook.add_recipes(entries=args.add_recipes):
+        if not recipe.CookBook().add_recipes(entry=args.add_recipes):
             return False
 
     # if required, update recipes
     if args.update:
         print('updating recipes...')
-        if not recipe.CookBook.update_recipes():
+        if not recipe.CookBook().update_recipes():
             return False
 
     # no recipe to install, exit

@@ -13,8 +13,38 @@ from forest.git_tools import GitTools
 recipe_fname = 'recipes.yaml'
 
 
-class CookBook(object):
+class RecipeSource:
+    def __init__(self, src_type: str, server: str, repository: str, tag: str):
+        self.type = src_type
+        self.server = server
+        self.repository = repository
+        self.tag = tag
+
+    def __str__(self):
+        return f"{self.type}%{self.server}%{self.repository}%{self.tag}"
+
+
+class Recipe:
+    def __init__(self, name:str, source: RecipeSource, full_path: str):
+        self.name = name
+        self.source = source
+        self.full_path = full_path
+
+
+class CookBook:
     recipe_fname = None
+    
+    def __init__(self):
+        with open(self.recipe_fname, 'r') as f:
+            yaml_list = yaml.safe_load(f.read())
+            if yaml_list is None:
+                yaml_list = list()
+
+        self.sources = []
+        for el in yaml_list:
+            self.sources.append(RecipeSource(el['type'], el["server"], el["repository"], el["tag"]))
+
+        self.recipes = {}
 
     @classmethod
     def write_recipe_file(cls, rootdir, recipe_fname='recipes.yaml'):
@@ -32,16 +62,15 @@ class CookBook(object):
             return True
 
     @classmethod
-    def add_recipes_source(cls, entries : List[str]):
-        _type='git'
-        server, name, tag = cls._parse_entries(entries, type=_type)
+    def add_recipes_source(cls, entry: List[str]):
+        _type = 'git'
 
         with open(cls.recipe_fname, 'r') as f:
             yaml_list = yaml.safe_load(f.read())
             if yaml_list is None:
                 yaml_list = list()
 
-            if not cls._add_source_to_yaml(entries, yaml_list):
+            if not cls._add_source_to_yaml(entry, yaml_list):
                 return False
 
         with open(cls.recipe_fname, 'w') as f:
@@ -49,9 +78,9 @@ class CookBook(object):
             return True
 
     @classmethod
-    def _add_source_to_yaml(cls, entry: dict, yaml_list) -> bool:
+    def _add_source_to_yaml(cls, entry: List[str], yaml_list) -> bool:
         _type = 'git'
-        server, name, tag = cls._parse_entries(entry, type=_type)
+        server, name, tag = cls._parse_entry(entry, type=_type)
 
         entry = {
             'type': _type,
@@ -68,55 +97,37 @@ class CookBook(object):
         yaml_list.append(entry)
         return True
 
-    @classmethod
-    def add_recipes(cls, entries : List[str]):
-        if not cls.add_recipes_source(entries):
+    def add_recipes(self, entry: List[str]):
+        if not self.add_recipes_source(entry):
             print('skip add recipes...')
 
         else:
             # add recipes only first time a new source is added
             _type = 'git'
-            server, name, tag = cls._parse_entries(entries, type=_type)
-            with TemporaryDirectory(prefix="forest-") as recipes_tmpdir:
-                recipes = cls._fetch_recipes(server, name, tag, recipes_tmpdir)
+            server, name, tag = self._parse_entry(entry, type=_type)
+            self.sources.append(RecipeSource(_type, server, name, tag))
 
-                check_recipes = recipes.copy()
-                check_recipes.extend(Package.get_available_recipes())
-                if len(check_recipes) != len(set(check_recipes)):
-                    duplicates = [item for item, count in collections.Counter(check_recipes).items() if count > 1]
-                    raise ValueError(f'Trying to add duplicates of the same recipe: {duplicates}')  # todo: meaningful error
-
-                for recipe in recipes:
-                    # recipe_name = os.path.splitext(f)[0]
-                    if recipe in Package.get_available_recipes():
-                        print(f'[{recipe}] updating recipe in {Package.get_recipe_path()}')
-
-                    else:
-                        print(f'[{recipe}] adding recipe to {Package.get_recipe_path()}')
-
-                    shutil.copy(os.path.join(recipes_tmpdir, 'recipes', f'{recipe}.yaml'), Package.get_recipe_path())
-
-        return True
+            return self.update_recipes()
 
     @staticmethod
-    def _parse_entries(entries : List[str], type='git'):
+    def _parse_entry(entry: List[str], type='git'):
 
         """
         Parse git server and repository name from the first element
-        of the input list (entries[0]). This is expected to be the
+        of the input list (entry[0]). This is expected to be the
         full address to the git repo according to either the ssh or
         https format.
 
 
         Raises:
-            ValueError: entries[0] does not match mattern
+            ValueError: entry[0] does not match mattern
 
         Returns:
             str, str: server and repository
         """
 
-        git_addr = entries[0]
-        git_tag = entries[1]
+        git_addr = entry[0]
+        git_tag = entry[1]
         good_patterns = ['git@{}:{}/{}.git', 'https://{}/{}/{}.git']
         parse_result_ssh = parse(good_patterns[0], git_addr)
         parse_result_https = parse(good_patterns[1], git_addr)
@@ -126,71 +137,108 @@ class CookBook(object):
         elif parse_result_https is not None:
             server, username, repository = parse_result_https
         else:
-            raise ValueError(f'could not parse git repository from given args {entries}')
+            raise ValueError(f'could not parse git repository from given args {entry}')
 
         return server, f'{username.lower()}/{repository.lower()}.git', git_tag
 
-    @staticmethod
-    def _fetch_recipes(server, repository, tag, tmpdir):
+    def _fetch_recipes(self, source: RecipeSource, path_to_recipes_dir='recipes'):
         """address: 'GIT {server}:{repository} TAG """
 
         # with TemporaryDirectory(prefix="forest-") as tmpdir:
+        with TemporaryDirectory(prefix="forest-") as tmpdir:
+            git_tools = GitTools(tmpdir)
 
-        git_tools = GitTools(tmpdir)
+            # git clone proto
+            from forest.common.fetch_handler import GitFetcher
+            proto = GitFetcher.proto_override
+            if proto is None:
+                proto = 'ssh'
 
-        # git clone proto
-        from forest.common.fetch_handler import GitFetcher
-        proto = GitFetcher.proto_override
-        if proto is None:
-            proto = 'ssh'
-        
-        # git clone
-        if not git_tools.clone(server, repository, proto=proto):
-            return []
+            # git clone
+            if not git_tools.clone(source.server, source.repository, proto=proto):
+                return []
 
-        # git checkout
-        if not git_tools.checkout(tag):
-            return []
+            # git checkout
+            if not git_tools.checkout(source.tag):
+                return []
 
-        # recipes are taken from the recipes/ subfolder
-        recipe_dir = os.path.join(tmpdir, 'recipes')
-        recipes = [os.path.splitext(f)[0] for f in os.listdir(recipe_dir) if
-                   os.path.isfile(os.path.join(recipe_dir, f))]
-        recipes.sort()
-        return recipes
+            # recipes are taken from the recipes/ subfolder
+            recipe_dir = os.path.join(tmpdir, path_to_recipes_dir)
+            recipes = sorted(f for f in os.listdir(recipe_dir) if os.path.isfile(os.path.join(recipe_dir, f)))
+            self.recipes[str(source)] = {}
+            for recipe in recipes:
+                name = os.path.split(recipe)[1]
+                self.recipes[str(source)][name] = Recipe(name, source, recipe)
 
-    @classmethod
-    def update_recipes(cls):
-        with open(cls.recipe_fname, 'r') as f:
-            yaml_list = yaml.safe_load(f.read())
-            if yaml_list is None:
-                yaml_list = list()
+    def _map_recipe_to_sources(self) -> dict:
+        """
+        returns dict[recipe_name] = list of source that contins the recipe
+        """
 
-        recipes_cache = []
+        # get set of all recipes in the remotes
+        recipe_names = set().union(*[d for d in self.recipes.values()])
 
-        for source in yaml_list:
-            if source['type'].lower() == 'git':
-                with TemporaryDirectory(prefix="forest-") as recipes_tmpdir:
-                    try:
-                        print(f'Fetching recipes from {source["server"]}: {source["repository"]} @{source["tag"]}')
-                        recipes = cls._fetch_recipes(source['server'], source['repository'], source['tag'], recipes_tmpdir)
+        # create a dict recipe: list of sources
+        recipe_to_sources = {}
+        for recipe in recipe_names:
+            recipe_to_sources[recipe] = []
+            for name, source in self.recipes.items():
+                if recipe in source:
+                    recipe_to_sources[recipe].append(name)
 
-                    except KeyError as e:
-                        raise KeyError(f'recipes.yaml git entry is missing {e.args[0]} mandatory key')
+        return recipe_to_sources
 
-                    # check for duplicates
-                    recipes_cache.extend(recipes)
-                    if len(recipes_cache) != len(set(recipes_cache)):
-                        duplicates = [item for item, count in collections.Counter(recipes_cache).items() if count > 1]
-                        print(f'Trying to fetch duplicates of the same recipe: {duplicates}')
-                        print('UPDATE FAILED')
-                        return False
+    def _select_sources(self, recipe_to_sources: dict) -> dict:
+        text = 'CONFLICT: select a source for recipe {} among:\n {}\n or digit "q" to QUIT forest'
+        for recipe, sources in recipe_to_sources.items():
+            selected = False
+            while not selected:
+                if len(sources) > 1:
+                    src_id = input(text.format(recipe, enumerate(sources)))
+                    if isinstance(src_id, int) and 0 < src_id < len(sources) - 1 :
+                        recipe_to_sources[recipe] = [sources[src_id]]
+                        selected = True
 
-                    for recipe in recipes:
-                        print(f'Updating {recipe}')
-                        shutil.copy(os.path.join(recipes_tmpdir, 'recipes', f'{recipe}.yaml'), Package.get_recipe_path())
+                    elif src_id == 'q':
+                        raise ValueError
+
+                    else:
+                        print('WRONG INPUT')
+
+            return recipe_to_sources
+
+    def update_recipes(self, path_to_recipes_dir='recipes'):
+        for source in self.sources:
+            self._fetch_recipes(source, path_to_recipes_dir)
+
+        recipe_to_sources = self._map_recipe_to_sources()
+        try:
+            recipe_to_sources = self._select_sources(recipe_to_sources)
+
+        except ValueError:
+            return False
+
+        for recipe, sources in recipe_to_sources:
+            assert len(sources) == 1
+            recipe_name = os.path.splitext(recipe)[0]
+
+            if recipe_name in Package.get_available_recipes():
+                print(f'[{recipe_name}] updating recipe in {Package.get_recipe_path()}')
 
             else:
-                raise TypeError(f'Not supported type {source["type"]} for fetching recipes')
+                print(f'[{recipe_name}] adding recipe to {Package.get_recipe_path()}')
+
+            shutil.copy(self.recipes[str(sources[0])][recipe_name].path, Package.get_recipe_path())
 
         return True
+
+
+
+
+
+
+
+
+
+
+
