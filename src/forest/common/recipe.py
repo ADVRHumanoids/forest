@@ -31,6 +31,10 @@ class Recipe:
         self.full_path = full_path
 
 
+class UserInterrupt(Exception):
+    pass
+
+
 class CookBook:
     recipe_fname = None
     
@@ -202,21 +206,31 @@ class CookBook:
         for all those recipes with multiple sources
         """
 
-        text = 'CONFLICT: select a source for recipe {} among:\n {}\n or digit "q" to QUIT forest\n'
+        intro_txt = 'CONFLICT select a source for recipe  {}  among:'
+        quit_text = 'or digit "q" to QUIT forest\n'
         for recipe, sources in recipe_to_sources.items():
+            prompt_txt = '\n'.join(
+                [intro_txt.format(os.path.splitext(recipe)[0])]
+                + ['\t{}: {}'.format(idx, source) for idx, source in enumerate(sources)]
+                + [quit_text])
             selected = False
             if len(sources) > 1:
                 while not selected:
-                    src_id = input(text.format(recipe, list(enumerate(sources))))
+                    src_id = input(prompt_txt)
                     if src_id == 'q':
-                        raise ValueError
-
-                    elif 0 <= int(src_id) < len(sources):
-                        recipe_to_sources[recipe] = [sources[int(src_id)]]
-                        selected = True
+                        raise UserInterrupt
 
                     else:
-                        print('WRONG INPUT')
+                        try:
+                            if 0 <= int(src_id) < len(sources):
+                                recipe_to_sources[recipe] = [sources[int(src_id)]]
+                                selected = True
+
+                            else:
+                                print(f'INVALID INPUT: index {int(src_id)} is out of range\n')
+
+                        except ValueError:
+                            print('INVALID INPUT\n')
 
     def update_recipes(self, path_to_recipes_dir='recipes'):
         tmpdirs = []
@@ -227,8 +241,11 @@ class CookBook:
         try:
             self._select_sources(recipe_to_sources)
 
-        except ValueError:
+        except UserInterrupt:
             # the user wants to quit halfway through the selection of sources
+            # delete the temporary dirs where the recipes where stored during the fetch
+            print('Recipes not updated')
+            tmpdirs.clear()
             return False
 
         for recipe, sources in recipe_to_sources.items():
@@ -244,7 +261,7 @@ class CookBook:
             shutil.copy(self.recipes[str(sources[0])][recipe].full_path, Package.get_recipe_path())
 
         # delete the temporary dirs where the recipes where stored during the fetch
-        map(lambda d: d.cleanup(), tmpdirs)
+        tmpdirs.clear()
         return True
 
 
