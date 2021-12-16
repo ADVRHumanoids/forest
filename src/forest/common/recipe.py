@@ -142,37 +142,45 @@ class CookBook:
         return server, f'{username.lower()}/{repository.lower()}.git', git_tag
 
     def _fetch_recipes(self, source: RecipeSource, path_to_recipes_dir='recipes'):
-        """address: 'GIT {server}:{repository} TAG """
+        """
+        Fetch recipes from source and store them in a temporary directory.
 
-        # with TemporaryDirectory(prefix="forest-") as tmpdir:
-        with TemporaryDirectory(prefix="forest-") as tmpdir:
-            git_tools = GitTools(tmpdir)
+        Return TemporaryDirectory object that manages the temporary directory
+        where the recipes have been stored. To delete the temporary dir call the
+        cleanup method on the TemporaryDirectory object.
+        """
 
-            # git clone proto
-            from forest.common.fetch_handler import GitFetcher
-            proto = GitFetcher.proto_override
-            if proto is None:
-                proto = 'ssh'
+        tmpdir = TemporaryDirectory(prefix="forest-")
 
-            # git clone
-            if not git_tools.clone(source.server, source.repository, proto=proto):
-                return []
+        git_tools = GitTools(tmpdir.name)
 
-            # git checkout
-            if not git_tools.checkout(source.tag):
-                return []
+        # git clone proto
+        from forest.common.fetch_handler import GitFetcher
+        proto = GitFetcher.proto_override
+        if proto is None:
+            proto = 'ssh'
 
-            # recipes are taken from the recipes/ subfolder
-            recipe_dir = os.path.join(tmpdir, path_to_recipes_dir)
-            recipes = sorted(f for f in os.listdir(recipe_dir) if os.path.isfile(os.path.join(recipe_dir, f)))
-            self.recipes[str(source)] = {}
-            for recipe in recipes:
-                name = os.path.split(recipe)[1]
-                self.recipes[str(source)][name] = Recipe(name, source, recipe)
+        # git clone
+        if not git_tools.clone(source.server, source.repository, proto=proto):
+            return []
+
+        # git checkout
+        if not git_tools.checkout(source.tag):
+            return []
+
+        # recipes are taken from the recipes/ subfolder
+        recipe_dir = os.path.join(tmpdir.name, path_to_recipes_dir)
+        recipes = sorted(f for f in os.listdir(recipe_dir) if os.path.isfile(os.path.join(recipe_dir, f)))
+        self.recipes[str(source)] = {}
+        for recipe in recipes:
+            name = os.path.split(recipe)[1]
+            self.recipes[str(source)][name] = Recipe(name, source, os.path.join(recipe_dir, recipe))
+
+        return tmpdir
 
     def _map_recipe_to_sources(self) -> dict:
         """
-        returns dict[recipe_name] = list of source that contins the recipe
+        Return a dictionary that maps each recipe to all its possible sources
         """
 
         # get set of all recipes in the remotes
@@ -189,47 +197,54 @@ class CookBook:
         return recipe_to_sources
 
     def _select_sources(self, recipe_to_sources: dict) -> dict:
-        text = 'CONFLICT: select a source for recipe {} among:\n {}\n or digit "q" to QUIT forest'
+        """
+        Prompt the user to select one source among the possible ones
+        for all those recipes with multiple sources
+        """
+
+        text = 'CONFLICT: select a source for recipe {} among:\n {}\n or digit "q" to QUIT forest\n'
         for recipe, sources in recipe_to_sources.items():
             selected = False
-            while not selected:
-                if len(sources) > 1:
-                    src_id = input(text.format(recipe, enumerate(sources)))
-                    if isinstance(src_id, int) and 0 < src_id < len(sources) - 1 :
-                        recipe_to_sources[recipe] = [sources[src_id]]
-                        selected = True
-
-                    elif src_id == 'q':
+            if len(sources) > 1:
+                while not selected:
+                    src_id = input(text.format(recipe, list(enumerate(sources))))
+                    if src_id == 'q':
                         raise ValueError
+
+                    elif 0 <= int(src_id) < len(sources):
+                        recipe_to_sources[recipe] = [sources[int(src_id)]]
+                        selected = True
 
                     else:
                         print('WRONG INPUT')
 
-            return recipe_to_sources
-
     def update_recipes(self, path_to_recipes_dir='recipes'):
+        tmpdirs = []
         for source in self.sources:
-            self._fetch_recipes(source, path_to_recipes_dir)
+            tmpdirs.append(self._fetch_recipes(source, path_to_recipes_dir))
 
         recipe_to_sources = self._map_recipe_to_sources()
         try:
-            recipe_to_sources = self._select_sources(recipe_to_sources)
+            self._select_sources(recipe_to_sources)
 
         except ValueError:
+            # the user wants to quit halfway through the selection of sources
             return False
 
-        for recipe, sources in recipe_to_sources:
+        for recipe, sources in recipe_to_sources.items():
             assert len(sources) == 1
             recipe_name = os.path.splitext(recipe)[0]
 
             if recipe_name in Package.get_available_recipes():
-                print(f'[{recipe_name}] updating recipe in {Package.get_recipe_path()}')
+                print(f'[{recipe_name}] updating recipe from {sources[0]}')
 
             else:
-                print(f'[{recipe_name}] adding recipe to {Package.get_recipe_path()}')
+                print(f'[{recipe_name}] adding recipe from {sources[0]}')
 
-            shutil.copy(self.recipes[str(sources[0])][recipe_name].path, Package.get_recipe_path())
+            shutil.copy(self.recipes[str(sources[0])][recipe].full_path, Package.get_recipe_path())
 
+        # delete the temporary dirs where the recipes where stored during the fetch
+        map(lambda d: d.cleanup(), tmpdirs)
         return True
 
 
