@@ -101,17 +101,24 @@ class CookBook:
         yaml_list.append(entry)
         return True
 
-    def add_recipes(self, entry: List[str]):
+    def add_recipe_src(self, entry: List[str]):
+        _type = 'git'
+        server, name, tag = self._parse_entry(entry, type=_type)
+        recipe_src = RecipeSource(_type, server, name, tag)
+        if not self._check_recipe_source(recipe_src):
+            print(f'Invalid recipe source: {recipe_src}')
+            return False
         if not self.add_recipes_source(entry):
-            print('skip add recipes...')
+            print(f'Recipe source {recipe_src} already present')
 
         else:
-            # add recipes only first time a new source is added
-            _type = 'git'
-            server, name, tag = self._parse_entry(entry, type=_type)
-            self.sources.append(RecipeSource(_type, server, name, tag))
+            print(f'Added recipe source: {recipe_src}')
 
-            return self.update_recipes()
+        return True
+
+    def _check_recipe_source(self, recipe_src: RecipeSource):
+        # todo: check that recipe_src is a valid source, return False otherwise
+        return True
 
     @staticmethod
     def _parse_entry(entry: List[str], type='git'):
@@ -232,12 +239,21 @@ class CookBook:
                         except ValueError:
                             print('INVALID INPUT\n')
 
-    def update_recipes(self, path_to_recipes_dir='recipes'):
+    def update_recipes(self, recipes=None, path_to_recipes_dir='recipes'):
         tmpdirs = []
         for source in self.sources:
             tmpdirs.append(self._fetch_recipes(source, path_to_recipes_dir))
 
         recipe_to_sources = self._map_recipe_to_sources()
+
+        if recipes is not None:
+            try:
+                recipe_to_sources = {f'{recipe}.yaml': recipe_to_sources[f'{recipe}.yaml'] for recipe in recipes}
+
+            except KeyError as e:
+                print(f'Invalid recipe name: {os.path.splitext(e.args[0])[0]}')
+                return False
+
         try:
             self._select_sources(recipe_to_sources)
 
@@ -263,7 +279,6 @@ class CookBook:
         # delete the temporary dirs where the recipes where stored during the fetch
         tmpdirs.clear()
         return True
-
 
 
 
