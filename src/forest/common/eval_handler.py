@@ -69,16 +69,21 @@ class EvalHandler:
             
             print('{:20s} {}'.format(k, descr))
 
-    def eval_condition(self, code: str) -> bool:
+    def eval_string(self, code: str, ret_type=str, default=None, throw_on_failure=True):
         try:
-            ret = bool(eval(code, None, self.locals.__dict__))
+            ret = ret_type(eval(code, None, self.locals.__dict__))
             if proc_utils.call_process_verbose:
                 print(f'{code} evaluated to {ret}')
             return ret
         except BaseException as e:
             if proc_utils.call_process_verbose:
-                print(f'failed to evaluate "{code}" with error "{str(e)}"')
-            return False
+                print(f'failed to evaluate "{code}" to {ret_type} with error "{str(e)}"')
+            if throw_on_failure:
+                raise e
+            return default
+
+    def eval_condition(self, code: str):
+        return self.eval_string(code=code, ret_type=bool, default=False, throw_on_failure=False)
 
     def format_string(self, text: str, locals=None) -> str:
         if locals is None:
@@ -124,6 +129,12 @@ class EvalHandler:
 
         
     def process_string(self, text, locals=None):
+        # check if text is in the form ${code}
+        is_expression = len(text) >= 3 and text[0:2] == '${' and text[-1] == '}'
+        if is_expression:
+            return self.eval_string(text[2:-1])
+        
+        # otherwise echo through the shell and then apply format rules
         ret = EvalHandler.echo(text)
         ret = self.format_string(ret, locals)
         return ret
