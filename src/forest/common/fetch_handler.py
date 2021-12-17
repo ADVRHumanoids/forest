@@ -139,6 +139,9 @@ class GitFetcher(FetchHandler):
         # create git tools
         git = GitTools(srcdir=srcdir)
 
+        eh = EvalHandler.instance()
+        tag_processed = eh.process_string(self.tag)
+
         # check existance
         pprint(f'cloning source code ({self.proto})...')
         if os.path.exists(srcdir):
@@ -148,8 +151,8 @@ class GitFetcher(FetchHandler):
             pprint(f'unable to clone source code')
             return False
 
-        elif not git.checkout(tag=self.tag):
-            pprint(f'unable to checkout tag {self.tag}, will remove source dir')
+        elif not git.checkout(tag=tag_processed):
+            pprint(f'unable to checkout tag {tag_processed}, will remove source dir')
             git.rm()
             return False
 
