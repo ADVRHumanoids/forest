@@ -182,6 +182,19 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
     return True
 
 
+def clean(pkg: str, buildroot: str,  installdir: str, verbose: bool):
+    pprint = ProgressReporter.get_print_fn(pkg)
+    pprint(f'cleaning..')
+    if uninstall_package(pkg=pkg, buildroot=buildroot, installdir=installdir, verbose=verbose):
+        builddir = os.path.join(buildroot, pkg)
+        pprint(f'removing build directory: {builddir}')
+        cmd = ['rm', '-r', builddir]
+        ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+        pprint('cleaning complete') if ok else print('error occurred during cleaning')
+        return ok
+
+    return False
+
 def write_setup_file(srcdir, installdir):
     
     """
