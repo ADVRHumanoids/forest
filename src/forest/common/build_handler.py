@@ -140,12 +140,12 @@ class CustomBuilder(BuildHandler):
 
 class CmakeBuilder(BuildHandler):
 
-    def __init__(self, pkgname, cmake_args=None, cmakelists='.') -> None:
+    def __init__(self, pkgname, cmake_args=None, cmakelists='.', target='install') -> None:
 
         super().__init__(pkgname=pkgname)
         self.cmake_args = cmake_args if cmake_args is not None else list()
         self.cmakelists_folder = cmakelists
-        self.target = 'install'
+        self.target = target
     
     
     @classmethod
@@ -170,7 +170,8 @@ class CmakeBuilder(BuildHandler):
 
         return CmakeBuilder(pkgname=pkgname, 
                             cmake_args=args,
-                            cmakelists=data.get('cmakelists', '.'))
+                            cmakelists=data.get('cmakelists', '.'),
+                            target=data.get('target', 'install'))
 
 
     def build(self, 
