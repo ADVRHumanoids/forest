@@ -188,10 +188,10 @@ class DebFetcher(FetchHandler):
         if getpass.getuser() != DebFetcher.superuser and DebFetcher.pwd is None:
             pwd = getpass.getpass()
             pprint('got password!')
-            DebFetcher.pwd = (pwd + '\n').encode()
+            DebFetcher.pwd = pwd
 
         return proc_utils.call_process(args=['sudo', '-Sk', 'apt', 'install', '-y', self.debname], 
-                                       input=DebFetcher.pwd)
+                                       input=(DebFetcher.pwd + '\n').encode())
 
     
     @classmethod

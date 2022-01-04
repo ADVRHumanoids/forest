@@ -66,7 +66,8 @@ def do_main():
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
     parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
     parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
-    
+    parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required; note: to be used with care, as exposing your password might be harmful!')
+
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
@@ -146,6 +147,11 @@ have you called forest --init ?', file=sys.stderr)
     # default cmake args
     if args.cmake_args:
         cmake_tools.CmakeTools.set_default_args(['-D' + a for a in args.cmake_args])
+
+    # pwd
+    if args.pwd:
+        from forest.common.fetch_handler import DebFetcher
+        DebFetcher.pwd = args.pwd
 
     # print jobs
     print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
