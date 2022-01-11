@@ -10,7 +10,9 @@ class GitTools:
             server: str, 
             repository: str, 
             proto='ssh', 
-            recursive=False):
+            recursive=False,
+            depth=None):
+
         if proto == 'ssh':
             addr = f'git@{server}:{repository}'
         elif proto == 'https':
@@ -19,9 +21,16 @@ class GitTools:
             # TODO more specific exception
             raise ValueError(f'unsupported protocol "{proto}"')
         
-        cmd = ['git', 'clone', addr, self.srcdir]
+        # create command
+        cmd = ['git', 'clone']
+        
         if recursive:
-            cmd.insert(2, '--recursive')
+            cmd.append('--recursive')
+
+        if depth is not None:
+            cmd.extend(['--depth', depth])
+
+        cmd.extend([addr, self.srcdir])
 
         # clone, and delete the source folder on failure
         # (either exception or git returns != 0) 

@@ -63,7 +63,8 @@ def do_main():
     parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
     parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
     parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
-    parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
+    parser.add_argument('--clone-depth', required=False, type=int, help='set maximum history depth to save bandwidth')
+    parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')        
     parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
     parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
     parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required; note: to be used with care, as exposing your password might be harmful!')
@@ -122,6 +123,10 @@ have you called forest --init ?', file=sys.stderr)
         from forest.common.fetch_handler import GitFetcher
         GitFetcher.proto_override = args.clone_protocol
 
+    # clone proto
+    if args.clone_depth is not None:
+        from forest.common.fetch_handler import GitFetcher
+        GitFetcher.depth_override = args.clone_depth
 
     # if required, add a recipe repository to the list of remotes
     if args.add_recipes is not None:
@@ -163,7 +168,8 @@ have you called forest --init ?', file=sys.stderr)
                                 installdir=installdir,
                                 buildtype=args.default_build_type,
                                 jobs=args.jobs,
-                                reconfigure=args.force_reconfigure
+                                reconfigure=args.force_reconfigure,
+                                no_deps=args.no_deps
                                 )
 
     return success

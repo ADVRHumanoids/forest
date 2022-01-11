@@ -6,6 +6,9 @@ call_process_verbose = False
 
 def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False) -> bool:
 
+    # convert args to string
+    args = list(map(str, args))
+
     if verbose or call_process_verbose:
         if shell:
             print(f'calling shell with command "{args}"')

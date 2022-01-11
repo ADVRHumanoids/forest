@@ -111,6 +111,9 @@ class GitFetcher(FetchHandler):
 
     # set this variable to override git clone protocol (e.g., to https)
     proto_override = None
+
+    # this sets the global clone depth
+    depth_override = None
     
     def __init__(self, pkgname, server, repository, tag=None, proto='ssh', recursive=False) -> None:
 
@@ -123,10 +126,28 @@ class GitFetcher(FetchHandler):
     
     @classmethod
     def from_yaml(cls, pkgname, data):
+        
+        eh = EvalHandler.instance()
+        
+        # process tag
+        tag = data['tag']
+        tag = eh.process_string(tag)
+
+        # parse tag_if (if present)
+        tag_if = data.get('tag_if', dict())
+        tag_if_parsed = eh.parse_conditional_dict(tag_if)
+
+        # tag_if has precendence
+        if len(tag_if_parsed) == 1:
+            tag = tag_if_parsed[0]
+
+        if len(tag_if_parsed) > 1:
+            raise RuntimeError(f'[{pkgname}] tag_if conditions must be mutually exclusive')
+
         return GitFetcher(pkgname=pkgname, 
                           server=data['server'],
                           repository=data['repository'],
-                          tag=data.get('tag', None),
+                          tag=tag,
                           proto=data.get('proto', 'ssh'),
                           recursive=data.get('recursive', False))
 
@@ -143,11 +164,17 @@ class GitFetcher(FetchHandler):
         tag_processed = eh.process_string(self.tag)
 
         # check existance
-        pprint(f'cloning source code ({self.proto})...')
         if os.path.exists(srcdir):
-            pprint(f'source code  already exists, skipping clone')
+            pprint(f'source code already exists, skipping clone')
+            return True
 
-        elif not git.clone(server=self.server, repository=self.repository, proto=self.proto, recursive=self.recursive):
+        pprint(f'cloning source code ({self.proto})...')
+        
+        if not git.clone(server=self.server, 
+                        repository=self.repository, 
+                        proto=self.proto, 
+                        recursive=self.recursive,
+                        depth=GitFetcher.depth_override):
             pprint(f'unable to clone source code')
             return False
 
