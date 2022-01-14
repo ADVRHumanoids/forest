@@ -114,7 +114,7 @@ class BuildHandler:
             env_hook_content += eh.process_string(hline, shell=False)
             env_hook_content += '\n'
         
-        builder.env_hook_content = env_hook_content
+        builder.env_hook_content = env_hook_content if len(env_hooks) > 0 else None
 
 
         return builder
