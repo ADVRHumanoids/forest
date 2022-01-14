@@ -1,3 +1,4 @@
+from distutils.command.build import build
 import os 
 from tempfile import TemporaryDirectory
 
@@ -25,6 +26,9 @@ class BuildHandler:
         self.pre_build_cmd = list()
         self.post_build_cmd = list()
 
+        # env hook to install
+        self.env_hook_content = None
+
     
     def pre_build(self, builddir):
         for cmd in self.pre_build_cmd:
@@ -34,6 +38,17 @@ class BuildHandler:
         for cmd in self.post_build_cmd:
             proc_utils.call_process(args=cmd, cwd=builddir, shell=True)
     
+    def install_env_hook(self, installdir):
+        if self.env_hook_content is None:
+            return 
+
+        os.makedirs(f'{installdir}/share/forest_env_hook', exist_ok=True)
+
+        with open(f'{installdir}/share/forest_env_hook/{self.pkgname}.bash', 'w') as f:
+            f.write(self.env_hook_content)
+
+        self.pprint('installed environment hook, re-source your setup.bash')
+
     def build(self, 
               srcdir: str, 
               builddir: str, 
@@ -92,6 +107,16 @@ class BuildHandler:
         builder.pre_build_cmd = list(pre_build)
         builder.post_build_cmd = list(post_build)
 
+        # env hooks
+        env_hooks = data.get('env_hooks', list())
+        env_hook_content = str()
+        for hline in env_hooks:
+            env_hook_content += eh.process_string(hline, shell=False)
+            env_hook_content += '\n'
+        
+        builder.env_hook_content = env_hook_content
+
+
         return builder
 
 
@@ -122,6 +147,9 @@ class CustomBuilder(BuildHandler):
                 if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
                     self.pprint(f'{cmd_p} failed')
                     return False 
+
+        # install hooks 
+        self.install_env_hook(installdir)
 
         # save to cache and exit
         BuildHandler.build_cache.add(self.pkgname)
@@ -217,6 +245,9 @@ class CmakeBuilder(BuildHandler):
 
         # post-build
         self.post_build(builddir)
+
+        # install hooks 
+        self.install_env_hook(installdir)
         
         # save to cache and exit
         BuildHandler.build_cache.add(self.pkgname)

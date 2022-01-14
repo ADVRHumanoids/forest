@@ -128,13 +128,18 @@ class EvalHandler:
         return args
 
         
-    def process_string(self, text, locals=None):
+    def process_string(self, text, locals=None, shell=True):
         # check if text is in the form ${code}
         is_expression = len(text) >= 3 and text[0:2] == '${' and text[-1] == '}'
         if is_expression:
             return self.eval_string(text[2:-1])
         
         # otherwise echo through the shell and then apply format rules
-        ret = EvalHandler.echo(text)
+        ret = str(text)
+
+        if shell:
+            ret = EvalHandler.echo(ret)
+
         ret = self.format_string(ret, locals)
+        
         return ret
