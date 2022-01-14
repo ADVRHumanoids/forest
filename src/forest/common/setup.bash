@@ -8,4 +8,6 @@ export ROS_PACKAGE_PATH=£PREFIX£/share:£PREFIX£/lib:$ROS_PACKAGE_PATH
 export PKG_CONFIG_PATH=£PREFIX£/lib/pkgconfig:$PKG_CONFIG_PATH
 
 # source env hooks
-for f in £PREFIX£/share/forest_env_hook/*; do source $f; done
+if [ -d £PREFIX£/share/forest_env_hook ]; then
+    for f in £PREFIX£/share/forest_env_hook/*; do source $f; done
+fi
