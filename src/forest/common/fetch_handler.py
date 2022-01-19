@@ -172,14 +172,11 @@ class GitFetcher(FetchHandler):
         
         if not git.clone(server=self.server, 
                         repository=self.repository, 
+                        tag=tag_processed,
                         proto=self.proto, 
                         recursive=self.recursive,
                         depth=GitFetcher.depth_override):
-            pprint(f'unable to clone source code')
-            return False
-
-        elif not git.checkout(tag=tag_processed):
-            pprint(f'unable to checkout tag {tag_processed}, will remove source dir')
+            pprint(f'unable to clone source code (tag {tag_processed})')
             git.rm()
             return False
 

@@ -9,6 +9,7 @@ class GitTools:
     def clone(self, 
             server: str, 
             repository: str, 
+            tag: str,
             proto='ssh', 
             recursive=False,
             depth=None):
@@ -22,7 +23,7 @@ class GitTools:
             raise ValueError(f'unsupported protocol "{proto}"')
         
         # create command
-        cmd = ['git', 'clone']
+        cmd = ['git', 'clone', '--branch', tag]
         
         if recursive:
             cmd.append('--recursive')
