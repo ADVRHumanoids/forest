@@ -145,11 +145,7 @@ class CookBook(object):
             proto = 'ssh'
         
         # git clone
-        if not git_tools.clone(server, repository, proto=proto):
-            return []
-
-        # git checkout
-        if not git_tools.checkout(tag):
+        if not git_tools.clone(server, repository, tag, proto=proto):
             return []
 
         # recipes are taken from the recipes/ subfolder

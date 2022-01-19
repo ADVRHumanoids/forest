@@ -32,11 +32,11 @@ class BuildHandler:
     
     def pre_build(self, builddir):
         for cmd in self.pre_build_cmd:
-            proc_utils.call_process(args=cmd, cwd=builddir, shell=True)
+            proc_utils.call_process(args=[cmd], cwd=builddir, shell=True)
 
     def post_build(self, builddir):
         for cmd in self.post_build_cmd:
-            proc_utils.call_process(args=cmd, cwd=builddir, shell=True)
+            proc_utils.call_process(args=[cmd], cwd=builddir, shell=True)
     
     def install_env_hook(self, installdir):
         if self.env_hook_content is None:
