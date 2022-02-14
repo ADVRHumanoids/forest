@@ -86,6 +86,9 @@ class Package(BasicPackage):
 
         # dependency list if any
         depends = recipe.get('depends', list())
+        if depends is None:
+            # empty entry "depends:" in yaml is parsed as None
+            depends = list()
         depends_if = recipe.get('depends_if', dict())
         depends.extend(eh.parse_conditional_dict(depends_if))
 
