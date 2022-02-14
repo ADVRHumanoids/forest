@@ -44,7 +44,7 @@ class GitTools:
             self.rm()
             raise e
 
-        return True
+        return clone_ok
 
     def checkout(self, tag):
         return proc_utils.call_process(['git', 'checkout', tag], cwd=self.srcdir)
