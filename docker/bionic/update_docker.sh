@@ -1,1 +1,0 @@
-docker pull ros:melodic-ros-base-bionic
