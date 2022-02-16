@@ -91,16 +91,16 @@ class Cookbook:
         recipes_dir = os.path.join(destination_dir, subdir)
         recipes_with_ext = [r + '.yaml' if not _has_yaml_ext(r) else r for r in recipes]
 
-        if not recipes:
+        if not recipes_with_ext:
             # empty recipes -> add all recipes
-            recipes = _filenames_from_folder(recipes_dir)
+            recipes_with_ext = _filenames_from_folder(recipes_dir)
 
         duplicates = _duplicate_recipes(recipes_with_ext, cls.basedir)
         if duplicates and not allow_overwrite:
-            recipes = _select_recipes(cls.basedir, recipes_dir, recipes_with_ext, duplicates)
+            recipes_with_ext = _select_recipes(cls.basedir, recipes_dir, recipes_with_ext, duplicates)
 
         # 3. symlink recipes
-        for r in recipes:
+        for r in recipes_with_ext:
             _symlink(r, file_folder=recipes_dir, link_folder=cls.basedir)
 
         # 3. update cls.recipes

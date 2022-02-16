@@ -82,7 +82,7 @@ def do_main():
     recipes_parser.add_argument('--tag', '-t', required=False, default='master')
     recipes_parser.add_argument('--subdir-path', '-s', required=False, default='recipes', help='relative path to the folder in which recipes are contained')
     recipes_parser.add_argument('--recipes', '-r', required=False, nargs='+', help='specify which recipes to add, otherwise all recipes in subdir-path are added')
-    recipes_parser.add_argument('--allow_overwrite', '-o', required=False, action='store_true', help='allow overwritng local recipes with new ones')
+    recipes_parser.add_argument('--allow-overwrite', '-o', required=False, action='store_true', help='allow overwritng local recipes with new ones')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
