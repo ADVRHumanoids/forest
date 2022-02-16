@@ -1,3 +1,5 @@
+import typing
+
 from forest.common import proc_utils
 import shutil
 
@@ -6,11 +8,13 @@ class GitTools:
     def __init__(self, srcdir) -> None:
         self.srcdir = srcdir
 
-    def clone(self, 
-            server: str, 
-            repository: str, 
-            proto='ssh', 
-            recursive=False):
+    def clone(self,
+              server: str,
+              repository: str,
+              proto='ssh',
+              recursive=False,
+              branch: typing.Optional[str] = None,
+              single_branch=False) -> bool:
         if proto == 'ssh':
             addr = f'git@{server}:{repository}'
         elif proto == 'https':
@@ -20,6 +24,13 @@ class GitTools:
             raise ValueError(f'unsupported protocol "{proto}"')
         
         cmd = ['git', 'clone', addr, self.srcdir]
+        if single_branch:
+            cmd.insert(2, '--single-branch')
+
+        if branch is not None:
+            cmd.insert(2, '-b')
+            cmd.insert(3, branch)
+
         if recursive:
             cmd.insert(2, '--recursive')
 

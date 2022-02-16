@@ -1,38 +1,122 @@
 import shutil
 import os
+import typing
 from tempfile import TemporaryDirectory
 import yaml
 import collections
 from typing import List
 from parse import parse
+import re
 
 from forest.common.package import Package
 from forest.git_tools import GitTools
-
+import forest.common.proc_utils as proc_utils
+from forest.git_tools import *
 # the file containing recipe repositories
 recipe_fname = 'recipes.yaml'
 
 
+# - clone repository (with given branch) into recipes/src
+# - symlink all .yaml files from recipes/src/miao/foldername to recipes
+# - handle conflicts, as follows
+#   * in default mode, conflict is an error
+#   * with --allow-recipe-overwrite, last file is used and an informative message is printed
+
+
 class RecipeSource:
-    def __init__(self, src_type: str, server: str, repository: str, tag: str):
-        self.type = src_type
+    def __init__(self, server: str, repository: str, tag: str):
         self.server = server
         self.repository = repository
         self.tag = tag
 
     def __str__(self):
-        return f"{self.type}%{self.server}%{self.repository}%{self.tag}"
+        return f"{self.server}%{self.repository}%{self.tag}"
 
 
 class Recipe:
-    def __init__(self, name:str, source: RecipeSource, full_path: str):
+    def __init__(self, name: str, source: RecipeSource, subdir='recipes'):
         self.name = name
+        self.subdir = subdir
         self.source = source
-        self.full_path = full_path
 
+
+class Cookbook:
+    recipes_basedir: str
+    recipes: typing.Mapping[str, typing.Sequence[str]]
+
+    @classmethod
+    def add_recipes(cls, *recipes: str, recipe_src: RecipeSource, recipes_subfolder: str = 'recipes'):
+        # 1. clone recipes
+        # 2. symlink recipes
+        # 3. update cls.recipes
+        _clone_recipes(cls.recipes_basedir, recipe_src, recipes_subfolder, recipes)
+
+    @classmethod
+    def _update(cls):
+        # 1. check self.recipes_basedir for recipes
+        # 2. get symlinks's real paths os.path.realpath
+        # 3. update cls.recipes
 
 class UserInterrupt(Exception):
     pass
+
+
+def _clone_recipes(recipes_basedir: str,
+                  recipe_src: RecipeSource,
+                  recipes_subfolder: str,
+                  recipes: typing.Optional[typing.Sequence[str]] = None) -> bool:
+
+    destination_basefolder = os.path.join(recipes_basedir, 'src')
+    destination_folder = os.path.join(destination_basefolder, recipe_src.repository, recipe_src.tag)
+    if os.path.exists(destination_folder):
+        print(f'{recipe_src.repository}/{recipe_src.tag}: recipes source code  already exists, skipping clone')
+        print(f'if you want to update recipes sources fetch/pull you may do so using git in {destination_folder}')
+
+    else:
+        g = GitTools(destination_folder)
+        if not g.clone(recipe_src.server, recipe_src.repository, branch=recipe_src.tag, single_branch=True):
+            return False
+
+        print(f'{recipe_src.repository}/{recipe_src.tag}: cloned recipes source code')
+
+    recipes_folder = os.path.join(destination_folder, recipes_subfolder)
+
+    duplicates = duplicate_recipes(recipes, recipes_basedir)
+    if duplicates:
+        # todo: add overwrite policy for unattended usage
+        # todo: add possibility to choose which symlink for attended usage
+        raise ValueError(f'trying to add duplicates of local recipes: {duplicates}\naborting symlink...')
+
+    for r in recipes:
+        symlink(r, from_folder=recipes_folder, to_folder=recipes_basedir)
+
+
+def symlink(recipe_fname: str, from_folder: str, to_folder: str) -> bool:
+    if not re.search("\.yaml$", recipe_fname):
+        raise ValueError(f'recipe_fname: {recipe_fname} must have .yaml extension')
+    cmd = ['ln', '-s', os.path.join(from_folder, recipe_fname), os.path.join(to_folder, recipe_fname)]
+    return proc_utils.call_process(cmd)
+
+
+def duplicate_recipes(incoming_recipes: typing.Sequence[str], recipe_folder: str) -> typing.Set[str]:
+    set_of_incoming_recipes = set(incoming_recipes)
+    assert len(incoming_recipes) == len(set_of_incoming_recipes)   # no duplicate in incoming recipes
+    current_recipes = filenames_from_folder(recipe_folder)
+    return set_of_incoming_recipes & current_recipes
+
+
+def filenames_from_folder(folder: str) -> typing.Set[str]:
+    return set(f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)))
+
+
+
+class Cookbook:
+    def __init__(self, path):
+        self.path = path
+        self.recipes: typing.Mapping[str, Recipe] = {}
+
+    def add_recipe(self):
+        pass
 
 
 class CookBook:

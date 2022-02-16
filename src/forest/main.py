@@ -52,8 +52,8 @@ def do_main():
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('recipe', nargs='?', choices=available_recipes, help='name of recipe with fetch and build information')
-    parser.add_argument('--add-recipe-src', '-a', nargs=2,  metavar=('URL', 'TAG'), required=False, help='add recipe source; two arguments are required, i.e., <url> <tag> (e.g. git@github.com:<username>/<reponame>.git master or https://github.com/<username>/<reponame>.git master')
-    parser.add_argument('--update-recipes', '-u', nargs='*', choices=available_recipes, required=False, metavar='RECIPE', help='update recipes')
+    parser.add_argument('--add-recipes', '-a', nargs='*',  metavar=('URL', 'TAG'), required=False, help='add recipe source; two arguments are required, i.e., <url> <tag> (e.g. git@github.com:<username>/<reponame>.git master or https://github.com/<username>/<reponame>.git master')
+    # parser.add_argument('--update-recipes', '-u', nargs='*', choices=available_recipes, required=False, metavar='RECIPE', help='update recipes')
     parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
     parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
@@ -138,6 +138,7 @@ have you called forest --init ?', file=sys.stderr)
 
     # if required, update recipes
     if args.update_recipes is not None:
+
         # if update args was used
         # see https://stackoverflow.com/questions/30487767/check-if-argparse-optional-argument-is-set-or-not
         print('updating recipes...')
