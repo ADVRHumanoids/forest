@@ -3,6 +3,7 @@ import typing
 from forest.common import proc_utils
 import shutil
 
+
 class GitTools:
 
     def __init__(self, srcdir) -> None:
@@ -37,9 +38,9 @@ class GitTools:
         # clone, and delete the source folder on failure
         # (either exception or git returns != 0) 
         try:
-             clone_ok = proc_utils.call_process(args=cmd)
-             if not clone_ok:
-                 self.rm()
+            clone_ok = proc_utils.call_process(args=cmd)
+            if not clone_ok:
+                self.rm()
         except BaseException as e:
             # remove src and re-raise exception
             self.rm()
@@ -52,4 +53,3 @@ class GitTools:
 
     def rm(self):
         shutil.rmtree(self.srcdir,  ignore_errors=True)
-
