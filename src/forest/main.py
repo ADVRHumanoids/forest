@@ -83,7 +83,7 @@ def do_main():
         print_utils.log_file = open(args.log_file, 'w')
 
     # sudo handling
-    if args.pwd or args.sudo:
+    if args.pwd is not None:
         sudo_refresher = sudo_refresh.SudoRefresher(pwd=args.pwd)
 
     # print available packages
