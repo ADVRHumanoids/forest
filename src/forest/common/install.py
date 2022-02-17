@@ -57,16 +57,32 @@ def install_package(pkg: str,
     # install dependencies if not found
     for dep in pkg.depends:
 
-        # if no-deps mode, skip the loop!
+        # this dependency build directory name (if exists)
+        dep_builddir = os.path.join(buildroot, dep)
+
+        # if dependency is built by this ws, trigger build
+        if os.path.exists(dep_builddir):
+            
+            # dependency found and built by forest -> trigger build
+            pprint(f'depends on {dep} -> build found, building..')   
+
+            ok = install_package(dep, srcroot, buildroot, installdir, 
+                    buildtype, jobs, reconfigure, no_deps=True)   
+
+            if not ok:
+                pprint(f'failed to build dependency {dep}')
+                return False 
+
+            # go to next dependency
+            continue
+
+        # if no-deps mode, skip dependency installation
         if no_deps:
             pprint('skipping dependencies')
-            break
+            continue
         
         # try to find-package this dependency
         dep_found = CmakeTools.find_package(dep)
-
-        # this dependency build directory name (if exists)
-        dep_builddir = os.path.join(buildroot, dep)
 
         if not dep_found:
             # dependency not found -> install it
@@ -80,16 +96,6 @@ def install_package(pkg: str,
                 pprint(f'failed to install dependency {dep}')
                 return False
 
-        elif os.path.exists(dep_builddir):
-            # dependency found and built by forest -> trigger build
-            pprint(f'depends on {dep} -> build found, building..')   
-
-            ok = install_package(dep, srcroot, buildroot, installdir, 
-                    buildtype, jobs, reconfigure)   
-
-            if not ok:
-                pprint(f'failed to build dependency {dep}')
-                return False 
         else:
             # dependency found and not built by forest -> nothing to do
             pprint(f'depends on {dep} -> found')
