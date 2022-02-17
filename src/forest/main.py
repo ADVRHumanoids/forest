@@ -11,9 +11,9 @@ from forest.common.eval_handler import EvalHandler
 
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file, uninstall_package, \
     clean
-from forest.common.package import Package
-from forest.common import recipe
+from forest.common.recipe import RecipeSource, Cookbook
 from pprint import pprint
+
 
 # just a try-except wrapper to catch ctrl+c
 def main():
@@ -26,6 +26,7 @@ def main():
         print('\nfailed (interrupted by user)')
         sys.exit(1)
 
+
 # actual main
 def do_main():
 
@@ -37,11 +38,10 @@ def do_main():
     srcroot = os.path.join(rootdir, 'src')
     
     # set recipe dir
-    Package.set_recipe_path(recipesdir)
-    recipe.Cookbook.basedir = recipesdir
+    Cookbook.set_recipe_path(recipesdir)
 
     # available recipes
-    available_recipes = Package.get_available_recipes()
+    available_recipes = Cookbook.get_available_recipes()
     if len(available_recipes) == 0:
         available_recipes = None
 
@@ -60,7 +60,7 @@ def do_main():
 
     grow_cmd = 'grow'
     grow_parser = subparsers.add_parser(grow_cmd, help='add recipes from git remote')
-    grow_parser.add_argument('recipe', nargs='?', choices=available_recipes, help='name of recipe with fetch and build information')
+    grow_parser.add_argument('recipe', nargs='?', metavar='RECIPE', choices=available_recipes, help='name of recipe with fetch and build information')
     grow_parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     grow_parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
     grow_parser.add_argument('--config', '-c', nargs='+', required=False, help='specify configuration variables that can be used inside recipes')
@@ -98,7 +98,7 @@ def do_main():
     have you called forest --init ?', file=sys.stderr)
         return False
 
-    # create directories
+    # create directories (if do not exist)
     for dir in (buildroot, installdir, srcroot, recipesdir):
         if not os.path.exists(dir):
             os.mkdir(dir)
@@ -117,7 +117,7 @@ def do_main():
 
     # print available packages
     if args.list:
-        print(' '.join(Package.get_available_recipes()))
+        print(' '.join(Cookbook.get_available_recipes()))
         return True
 
     # set config vars
@@ -139,9 +139,8 @@ def do_main():
 
     if args.command == recipes_cmd:
         print('adding recipes...')
-        recipe_source = recipe.RecipeSource.FromUrl(args.url, args.tag)
-        recipe.Cookbook.add_recipes(recipe_source, args.recipes, args.subdir_path, args.allow_overwrite)
-        return True
+        recipe_source = RecipeSource.FromUrl(args.url, args.tag)
+        return Cookbook.add_recipes(recipe_source, args.recipes, args.subdir_path, args.allow_overwrite)
 
     # no recipe to install, exit
     if args.command == grow_cmd and args.recipe is None:

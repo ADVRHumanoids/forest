@@ -4,6 +4,7 @@ from forest.cmake_tools import CmakeTools
 from . import package
 from .print_utils import ProgressReporter
 from forest.common import proc_utils
+from forest.common.recipe import Cookbook
 
 _build_cache = dict()
 
@@ -54,7 +55,7 @@ def install_package(pkg: str,
     try:
         pkg = package.Package.from_name(name=pkg)
     except FileNotFoundError:
-        pprint(f'recipe file not found (searched in {package.Package.get_recipe_path()})')
+        pprint(f'recipe file not found (searched in {Cookbook.get_recipe_path()})')
         return False
 
     # install dependencies if not found
@@ -129,7 +130,7 @@ def uninstall_package(pkg: str,
     try:
         pkg = package.Package.from_name(name=pkg)
     except FileNotFoundError:
-        pprint(f'recipe file not found (searched in {package.Package.get_recipe_path()})')
+        pprint(f'recipe file not found (searched in {Cookbook.get_recipe_path()})')
         return False
 
     builddir = os.path.join(buildroot, pkg.name)
@@ -240,4 +241,3 @@ def write_ws_file(rootdir):
     with open(ws_file, 'w') as f:
         f.write('# forest marker file \n')
         return True
-
