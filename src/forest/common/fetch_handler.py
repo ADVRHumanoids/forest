@@ -185,10 +185,6 @@ class GitFetcher(FetchHandler):
 
 class DebFetcher(FetchHandler):
 
-    # user password
-    pwd = None
-    superuser = 'root'
-
     def __init__(self, pkgname, debname: str) -> None:
         super().__init__(pkgname)
         # note: expand environment variables between {curly braces}
@@ -214,8 +210,7 @@ class DebFetcher(FetchHandler):
             pprint('got password!')
             DebFetcher.pwd = pwd
 
-        return proc_utils.call_process(args=['sudo', '-Sk', 'apt', 'install', '-y', self.debname], 
-                                       input=(DebFetcher.pwd + '\n').encode())
+        return proc_utils.call_process(args=['sudo', 'apt', 'install', '-y', self.debname])
 
     
     @classmethod

@@ -11,6 +11,7 @@ from forest.common.eval_handler import EvalHandler
 from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
 from forest.common.package import Package
 from forest.common import recipe
+from forest.common import sudo_refresh
 
 # just a try-except wrapper to catch ctrl+c
 def main():
@@ -67,7 +68,7 @@ def do_main():
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')        
     parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
     parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
-    parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required; note: to be used with care, as exposing your password might be harmful!')
+    parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required (if empty, user is prompted for password); note: to be used with care, as exposing your password might be harmful!')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -80,6 +81,10 @@ def do_main():
     if not args.verbose:
         from forest.common import print_utils
         print_utils.log_file = open(args.log_file, 'w')
+
+    # sudo handling
+    if args.pwd or args.sudo:
+        sudo_refresher = sudo_refresh.SudoRefresher(pwd=args.pwd)
 
     # print available packages
     if args.list:
