@@ -1,0 +1,11 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/forest-test.git
+  tag: master
+
+build:
+  type: cmake
+  args_if:
+    opt_b:
+      - -DINSTALL_B_FILE=ON

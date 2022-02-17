@@ -2,7 +2,10 @@ clone:
   type: git
   server: github.com
   repository: advrhumanoids/forest-test.git
-  tag: master
+  tag: with_dep
 
 build:
   type: cmake
+
+depends:
+  - forest_test

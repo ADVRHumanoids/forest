@@ -12,7 +12,10 @@ source $TEST_DIR/common.bash
 cd $WORK_DIR
 pwd 
 
+# initialize workspace
 forest --init
+
+# check expected files and folders do exist
 if [ ! -f $WORK_DIR/setup.bash ]; then exit 1; fi
 if [ ! -d $WORK_DIR/src ]; then exit 1; fi
 if [ ! -d $WORK_DIR/build ]; then exit 1; fi
