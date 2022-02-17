@@ -17,7 +17,6 @@ if __name__ == '__main__':
     for f in bash_test_files:
         def do_test(self):
             subprocess.run(f, check=True)
-        print(os.path.basename(f)[-5:])
         setattr(TestForestBashWrapper, os.path.basename(f)[:-5], do_test)
 
     unittest.main()
