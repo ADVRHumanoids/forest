@@ -94,7 +94,7 @@ class CustomFetcher(FetchHandler):
         with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
             for cmd in self.commands:
                 cmd_p = eh.process_string(cmd, {'srcdir': srcdir})
-                if not proc_utils.call_process(cmd_p, cwd=tmpdir, shell=True, print_on_error=True):
+                if not proc_utils.call_process([cmd_p], cwd=tmpdir, shell=True, print_on_error=True):
                     self.pprint(f'{cmd_p} failed')
                     shutil.rmtree(srcdir, ignore_errors=True)
                     return False 

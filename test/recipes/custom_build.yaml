@@ -1,0 +1,6 @@
+build:
+  type: custom
+  cmd:
+    - touch {srcdir}/a_file_{jobs}.txt
+    - mkdir -p {installdir}/share/custom_build
+    - touch {installdir}/share/custom_build/b_file.txt

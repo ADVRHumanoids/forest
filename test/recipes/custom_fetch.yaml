@@ -1,0 +1,5 @@
+clone:
+  type: custom
+  cmd:
+    - touch {srcdir}/a_file.txt
+    - touch {srcdir}/b_file.txt
