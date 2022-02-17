@@ -11,8 +11,9 @@ class TestForestBashWrapper(unittest.TestCase):
 
 if __name__ == '__main__':
     curr_dir = os.path.dirname(os.path.abspath(__file__))
-    bash_test_files = glob.glob(curr_dir + '/test_*.bash').sort()
-    print(f'found bash test files: {bash_test_files}')
+    bash_test_files = glob.glob(curr_dir + '/test_*.bash')
+    bash_test_files.sort()
+    print(f'found bash test files in {curr_dir}: {bash_test_files}')
     for f in bash_test_files:
         def do_test(self):
             subprocess.run(f, check=True)
