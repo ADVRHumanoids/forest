@@ -1,0 +1,8 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/forest-test.git
+  tag: master
+
+build:
+  type: cmake
