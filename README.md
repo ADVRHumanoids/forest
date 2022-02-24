@@ -1,4 +1,4 @@
-# forest
+# forest [![Build Status](https://app.travis-ci.com/ADVRHumanoids/forest.svg?branch=master)](https://app.travis-ci.com/ADVRHumanoids/forest)
 The forest project aims at automatizing the clone and build process for open source software. Differently from other systems such as [Conda](https://docs.conda.io/en/latest/), or [Conan](https://conan.io/), it is a non-intrusive system which does not aim at environment management. 
 
 ## Quickstart
