@@ -11,7 +11,7 @@ jobs:
 
 branches:
   only:
-    - al_devel
+    - master
     - /^v\d+\.\d+\.\d+.*$/  # version tags
 
 notifications:
@@ -20,7 +20,7 @@ notifications:
       - marco.ruzzon@iit.it
       - arturo.laurenzi@iit.it
     on_success: never
-    on_failure: never
+    on_failure: always
 
 before_script:
   - echo "Travis tag is $TRAVIS_TAG"
