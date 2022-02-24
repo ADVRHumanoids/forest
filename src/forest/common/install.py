@@ -3,6 +3,7 @@ import os
 from forest.cmake_tools import CmakeTools
 from . import package
 from .print_utils import ProgressReporter
+from .forest_dirs import *
 
 _build_cache = dict()
 
@@ -121,7 +122,7 @@ def install_package(pkg: str,
     return ok
 
 
-def write_setup_file(srcdir, installdir):
+def write_setup_file():
     
     """
     Write a setup file to the root directory.
@@ -132,7 +133,8 @@ def write_setup_file(srcdir, installdir):
     with open(setup_template, 'r') as f:
         content = f.read()
         content = content.replace('£PREFIX£', os.path.realpath(installdir))
-        content = content.replace('£SRCDIR£', os.path.realpath(srcdir))
+        content = content.replace('£SRCDIR£', os.path.realpath(srcroot))
+        content = content.replace('£ROOTDIR£', os.path.realpath(rootdir))
     
     setup_file = os.path.join(installdir, '..', 'setup.bash')
     if not os.path.exists(setup_file):

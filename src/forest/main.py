@@ -13,6 +13,9 @@ from forest.common.package import Package
 from forest.common import recipe
 from forest.common import sudo_refresh
 
+# define directories for source, build, install, and recipes
+from forest.common.forest_dirs import *
+
 # just a try-except wrapper to catch ctrl+c
 def main():
     try:
@@ -26,13 +29,6 @@ def main():
 
 # actual main
 def do_main():
-
-    # define directories for source, build, install, and recipes
-    rootdir = os.getcwd()
-    recipesdir = os.path.join(rootdir, 'recipes')
-    buildroot = os.path.join(rootdir, 'build')
-    installdir = os.path.join(rootdir, 'install')
-    srcroot = os.path.join(rootdir, 'src')
 
     # create recipes file
     recipe.CookBook.set_recipe_fname(rootdir, recipe_fname='recipes.yaml')
@@ -121,7 +117,7 @@ have you called forest --init ?', file=sys.stderr)
             os.mkdir(dir)
 
     # create setup.bash if does not exist
-    write_setup_file(srcdir=srcroot, installdir=installdir)
+    write_setup_file()
 
     # clone proto
     if args.clone_protocol is not None:
