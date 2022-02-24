@@ -16,6 +16,7 @@ if __name__ == '__main__':
     print(f'found bash test files in {curr_dir}: {bash_test_files}')
     for f in bash_test_files:
         def do_test(self):
+            print(f'\n\n\n>>>>>>> running test {f}')
             subprocess.run(f, check=True)
         setattr(TestForestBashWrapper, os.path.basename(f)[:-5], do_test)
 
