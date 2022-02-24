@@ -83,6 +83,8 @@ class EvalHandler:
             return default
 
     def eval_condition(self, code: str):
+        if isinstance(code, bool):
+            return code
         return self.eval_string(code=code, ret_type=bool, default=False, throw_on_failure=False)
 
     def format_string(self, text: str, locals=None) -> str:
@@ -128,7 +130,23 @@ class EvalHandler:
         return args
 
         
-    def process_string(self, text, locals=None, shell=True):
+    def process_string(self, text: str, locals=None, shell=True) -> str:
+        """
+        Process a string through a pipeline of operations as follows.
+        a) if the input text is in the form ${code}, we evaluate code via
+           the interpreter with given locals, and return
+        b) otherwise, we first echo the input text via the shell,
+           and then apply {} formatting with given locals.
+
+        Args:
+            text (str): input string
+            locals (Dict[str, -], optional): A dictionary with variables used for string formatting. Defaults to None.
+            shell (bool, optional): Enable parsing via the shell. Defaults to True.
+
+        Returns:
+            str: the processed string
+        """
+
         # check if text is in the form ${code}
         is_expression = len(text) >= 3 and text[0:2] == '${' and text[-1] == '}'
         if is_expression:
