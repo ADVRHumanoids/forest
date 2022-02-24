@@ -159,6 +159,10 @@ have you called forest --init ?', file=sys.stderr)
         from forest.common.fetch_handler import DebFetcher
         DebFetcher.pwd = args.pwd
 
+    # check ws is sourced
+    if rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
+        print('[warn] forest workspace does not appear to be sourced')
+
     # print jobs
     print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
 
