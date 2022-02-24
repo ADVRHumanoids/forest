@@ -49,8 +49,8 @@ def do_main():
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
-    parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
+    parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
 
     subparsers = parser.add_subparsers(dest='command')
 
@@ -70,6 +70,7 @@ def do_main():
     grow_parser.add_argument('--uninstall', required=False, action='store_true', help='uninstall recipe')
     grow_parser.add_argument('--clean', required=False, action='store_true', help='uninstall recipe and remove build')
     grow_parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required (if empty, user is prompted for password); note: to be used with care, as exposing your password might be harmful!')
+    grow_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
 
     recipes_cmd = 'add-recipes'
     recipes_parser = subparsers.add_parser(recipes_cmd, help='add recipes from git remote')
@@ -78,6 +79,7 @@ def do_main():
     recipes_parser.add_argument('--subdir-path', '-s', required=False, default='recipes', help='relative path to the folder in which recipes are contained')
     recipes_parser.add_argument('--recipes', '-r', required=False, nargs='+', help='specify which recipes to add, otherwise all recipes in subdir-path are added')
     recipes_parser.add_argument('--allow-overwrite', '-o', required=False, action='store_true', help='allow overwritng local recipes with new ones')
+    recipes_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()

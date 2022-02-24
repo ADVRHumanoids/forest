@@ -36,7 +36,7 @@ class FetchHandler:
         self.symlink_dst = None
 
     
-    def fetch(self, srcdir, username=None, pwd=None):
+    def fetch(self, srcdir):
         """
         Fetch the package if srcdir does not exist. Afterwards, carry out
         post-fetch operations according to the recipe.
