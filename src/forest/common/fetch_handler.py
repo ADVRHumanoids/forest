@@ -1,6 +1,5 @@
 import os 
 import shutil
-import getpass
 from tempfile import TemporaryDirectory
 
 from forest.git_tools import GitTools
@@ -32,10 +31,47 @@ class FetchHandler:
         # print function to report progress
         self.pprint = ProgressReporter.get_print_fn(pkgname)
 
+        # create symlink after do_fetch?
+        self.symlink_dst = None
+
     
     def fetch(self, srcdir):
         """
-        Carry out the fetch operation on the package.
+        Fetch the package if srcdir does not exist. Afterwards, carry out
+        post-fetch operations according to the recipe.
+
+        Args:
+            srcdir (str): directory where sources are cloned/copied
+
+        Returns:
+            True on success
+        """
+
+        if os.path.exists(srcdir):
+            self.pprint(f'source code  already exists, skipping clone')
+            return True
+
+        if not self.do_fetch(srcdir):
+            self.pprint(f'clone failed') 
+            return False 
+
+        if self.symlink_dst is not None:
+            # get the directory component
+            dir = os.path.dirname(self.symlink_dst)
+
+            # create directory
+            os.makedirs(dir, exist_ok=True)
+
+            # create link
+            os.symlink(srcdir, self.symlink_dst)
+
+        return True
+    
+    
+    def do_fetch(self, srcdir):
+        """
+        Carry out the actual fetch operation on the package.
+        To be overridden by derived classes.
 
         Args:
             srcdir (str): directory where sources are cloned/copied
@@ -62,14 +98,31 @@ class FetchHandler:
         """
 
         fetchtype = data['type']
+        
         if fetchtype == 'git':
-            return GitFetcher.from_yaml(pkgname=pkgname, data=data)
+            ret = GitFetcher.from_yaml(pkgname=pkgname, data=data)
         elif fetchtype == 'deb':
-            return DebFetcher.from_yaml(pkgname=pkgname, data=data)
+            ret = DebFetcher.from_yaml(pkgname=pkgname, data=data)
         elif fetchtype == 'custom':
-            return CustomFetcher.from_yaml(pkgname=pkgname, data=data)
+            ret = CustomFetcher.from_yaml(pkgname=pkgname, data=data)
         else: 
             raise ValueError(f'unsupported fetch type "{fetchtype}"')
+
+        # create symlink if necessary
+        ros_src = data.get('ros_src', None)
+
+        print(ros_src)
+
+        if ros_src is not None:
+            
+            # evaluator
+            eh = EvalHandler.instance()
+            
+            if eh.eval_condition(ros_src):
+                from .forest_dirs import rootdir
+                ret.symlink_dst = os.path.join(rootdir, 'ros_src', pkgname)
+
+        return ret
 
 
 class CustomFetcher(FetchHandler):
@@ -78,14 +131,10 @@ class CustomFetcher(FetchHandler):
         super().__init__(pkgname)
         self.commands = list()
 
-    def fetch(self, srcdir):
+    def do_fetch(self, srcdir):
         
         # evaluator
         eh = EvalHandler.instance()
-        
-        if os.path.exists(srcdir):
-            self.pprint(f'source code  already exists, skipping clone')
-            return True
         
         # create source folder
         os.mkdir(srcdir)
@@ -152,7 +201,7 @@ class GitFetcher(FetchHandler):
                           recursive=data.get('recursive', False))
 
 
-    def fetch(self, srcdir) -> bool:
+    def do_fetch(self, srcdir) -> bool:
         
         # custom print shorthand
         pprint = self.pprint
@@ -162,11 +211,6 @@ class GitFetcher(FetchHandler):
 
         eh = EvalHandler.instance()
         tag_processed = eh.process_string(self.tag)
-
-        # check existance
-        if os.path.exists(srcdir):
-            pprint(f'source code already exists, skipping clone')
-            return True
 
         pprint(f'cloning source code ({self.proto})...')
         
@@ -192,7 +236,7 @@ class DebFetcher(FetchHandler):
         self.debname = debname.format(**os.environ)
 
     
-    def fetch(self, srcdir) -> bool:
+    def do_fetch(self, srcdir) -> bool:
 
         # custom print shorthand
         pprint = self.pprint
