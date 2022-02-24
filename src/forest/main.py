@@ -196,6 +196,8 @@ def do_main():
 
         return success
 
+    return True
+
 
 if __name__ == '__main__':
     main()
