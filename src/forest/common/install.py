@@ -1,72 +1,40 @@
-from genericpath import exists
 import os
 
 from forest.cmake_tools import CmakeTools
-from forest.git_tools import GitTools
 from . import package
+from .print_utils import ProgressReporter
+from .forest_dirs import *
 
 _build_cache = dict()
 
-def build_package(pkgname: str, 
+def build_package(pkg: package.Package, 
                   srcroot: str, 
                   buildroot: str, 
                   installdir: str,
                   buildtype: str,
-                  jobs : int,
-                  force_configure=False):
+                  jobs: int,
+                  reconfigure=False):
 
-    if pkgname in _build_cache.keys():
-        print(f'[{pkgname}] already built, skipping')
-        return True
-
-    # retrieve package info from recipe
-    try:
-        pkg = package.Package.from_name(name=pkgname)
-    except FileNotFoundError:
-        print(f'[{pkgname}] recipe file not found (searched in {package.Package.get_recipe_path()})')
-        return False
-
-    # source dir
+    # source dir and build dir
     srcdir = os.path.join(srcroot, pkg.name)
-
-    # create cmake tools
-    cmakelists = os.path.join(srcdir, pkg.cmakelists)
     builddir = os.path.join(buildroot, pkg.name)
-    if not os.path.exists(builddir):
-        os.mkdir(builddir)
-    cmake = CmakeTools(srcdir=cmakelists, builddir=builddir)
 
-    # set install prefix and build type (only on first configuration)
-    cmake_args = list()
-    if not cmake.is_configured():
-        cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
-        cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
-        cmake_args += pkg.cmake_args  # note: flags from recipes as last entries to allow override
+    # doit!
+    return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir, 
+                      buildtype=buildtype, jobs=jobs, reconfigure=reconfigure)
 
-    # configure
-    if not cmake.is_configured() or force_configure:
-        print(f'[{pkg.name}] running cmake...')
-        if not cmake.configure(args=cmake_args):
-            print(f'[{pkg.name}] configuring failed')
-            return False
 
-    # build
-    print(f'[{pkg.name}] building...')
-    if not cmake.build(target=pkg.target, jobs=jobs):
-        print(f'[{pkg.name}] build failed')
-        return False 
-    
-    # save to cache and exit
-    _build_cache[pkgname] = True
-    return True
 
 # function to install one package with dependencies
+@ProgressReporter.count_calls
 def install_package(pkg: str,
                     srcroot: str,
                     buildroot: str,
                     installdir: str,
                     buildtype: str,
-                    jobs : int):
+                    jobs: int,
+                    reconfigure=False, 
+                    no_deps=False):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -77,82 +45,87 @@ def install_package(pkg: str,
         bool: success flag
     """
 
+    # custom print
+    pprint = ProgressReporter.get_print_fn(pkg)
+
     # retrieve package info from recipe
     try:
         pkg = package.Package.from_name(name=pkg)
     except FileNotFoundError:
-        print(f'[{pkg}] recipe file not found (searched in {package.Package.get_recipe_path()})')
+        pprint(f'recipe file not found (searched in {package.Package.get_recipe_path()})')
         return False
 
     # install dependencies if not found
     for dep in pkg.depends:
 
-        dep_found = CmakeTools.find_package(dep)
+        # this dependency build directory name (if exists)
         dep_builddir = os.path.join(buildroot, dep)
 
-        if not dep_found:
-            print(f'[{pkg.name}] depends on {dep} -> not found, installing..')
-            ok = install_package(dep, srcroot, buildroot, installdir, buildtype, jobs)
+        # if dependency is built by this ws, trigger build
+        if os.path.exists(dep_builddir):
+            
+            # dependency found and built by forest -> trigger build
+            pprint(f'depends on {dep} -> build found, building..')   
+
+            ok = install_package(dep, srcroot, buildroot, installdir, 
+                    buildtype, jobs, reconfigure, no_deps=True)   
+
             if not ok:
-                print(f'[{pkg.name}] failed to install dependency {dep}')
-                return False
-        elif os.path.exists(dep_builddir):
-            print(f'[{pkg.name}] depends on {dep} -> build found, building..')   
-            ok = build_package(pkgname=dep, 
-                               srcroot=srcroot, 
-                               buildroot=buildroot, 
-                               installdir=installdir, 
-                               buildtype=buildtype, 
-                               jobs=jobs)   
-            if not ok:
-                print(f'[{pkg.name}] failed to build dependency {dep}')
+                pprint(f'failed to build dependency {dep}')
                 return False 
+
+            # go to next dependency
+            continue
+
+        # if no-deps mode, skip dependency installation
+        if no_deps:
+            pprint('skipping dependencies')
+            continue
+        
+        # try to find-package this dependency
+        dep_found = CmakeTools.find_package(dep)
+
+        if not dep_found:
+            # dependency not found -> install it
+            pprint(f'depends on {dep} -> not found, installing..')
+            
+            # note: reconfigure needed if there's build but not install
+            ok = install_package(dep, srcroot, buildroot, installdir, 
+                    buildtype, jobs, reconfigure)   
+
+            if not ok:
+                pprint(f'failed to install dependency {dep}')
+                return False
+
         else:
-            print(f'[{pkg.name}] depends on {dep} -> found')
+            # dependency found and not built by forest -> nothing to do
+            pprint(f'depends on {dep} -> found')
     
-    # if basic package, stop here
-    if not isinstance(pkg, package.Package):
-        return True
-
-    # pkg is a full Package type
-    pkg : package.Package = pkg
-
-    # create git tools
+    # use the fetcher! (if not build only)
     srcdir = os.path.join(srcroot, pkg.name)
-    git = GitTools(srcdir=srcdir)
-
-    # clone & checkout tag
-    print(f'[{pkg.name}] cloning source code ...')
-    if os.path.exists(srcdir):
-        print(f'[{pkg.name}] source code  already exists, skipping clone')
-
-    elif not git.clone(server=pkg.git_server, repository=pkg.git_repo, proto='ssh'):
-        print(f'[{pkg.name}] unable to clone source code')
-        return False
-
-    elif not git.checkout(tag=pkg.git_tag):
-        print(f'[{pkg.name}] unable to checkout tag {pkg.git_tag}')
-        return False
+    if not pkg.fetcher.fetch(srcdir):
+        pprint('failed to fetch package')
+        return False 
     
     # configure and build
-    ok = build_package(pkgname=pkg.name, 
+    ok = build_package(pkg=pkg, 
                        srcroot=srcroot, 
                        buildroot=buildroot, 
                        installdir=installdir, 
                        buildtype=buildtype, 
                        jobs=jobs, 
-                       force_configure=False)   
+                       reconfigure=reconfigure)
 
     if ok:
-        print(f'[{pkg.name}] ok')
+        pprint('ok')
 
     return ok
 
 
-def write_setup_file(installdir):
+def write_setup_file():
     
     """
-    Write a setup file to the given installdir directory.
+    Write a setup file to the root directory.
     """
 
     this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -160,8 +133,10 @@ def write_setup_file(installdir):
     with open(setup_template, 'r') as f:
         content = f.read()
         content = content.replace('£PREFIX£', os.path.realpath(installdir))
+        content = content.replace('£SRCDIR£', os.path.realpath(srcroot))
+        content = content.replace('£ROOTDIR£', os.path.realpath(rootdir))
     
-    setup_file = os.path.join(installdir, 'setup.bash')
+    setup_file = os.path.join(installdir, '..', 'setup.bash')
     if not os.path.exists(setup_file):
         with open(setup_file, 'w') as f:
             f.write(content)
@@ -170,7 +145,7 @@ def write_setup_file(installdir):
 def check_ws_file(rootdir):
     
     """
-    Write a hidden file to mark the forest root directory
+    Check forest marker file exists
     """
 
     ws_file = os.path.join(rootdir, '.forest')
@@ -191,7 +166,6 @@ def write_ws_file(rootdir):
         return False
 
     with open(ws_file, 'w') as f:
-        f.write('# forest marker file')
+        f.write('# forest marker file \n')
         return True
 
-    

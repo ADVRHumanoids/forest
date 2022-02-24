@@ -4,6 +4,7 @@ import os
 from forest.common import proc_utils
 
 cmake_command = 'cmake'
+default_args = list()
 
 def _construct(self, srcdir, builddir):
     self.srcdir = srcdir
@@ -11,14 +12,18 @@ def _construct(self, srcdir, builddir):
 
 def _is_configured(self):
 
-    return os.path.exists(os.path.join(self.builddir, 'CMakeCache.txt'))
+    return os.path.exists(os.path.join(self.builddir, 'Makefile'))
+
+def _set_default_args(args):
+    global default_args
+    default_args = args
 
 def _configure(self, args):
 
     if args is None:
         args = list()
 
-    return _call_cmake([self.srcdir] + args, cwd=self.builddir)
+    return _call_cmake([self.srcdir] + args + default_args, cwd=self.builddir)
     
 
 def _build(self, target, jobs):
@@ -34,7 +39,7 @@ def _call_cmake(args, cwd='.', print_on_error=True):
 
 def _find_package(pkg_name: str):
         
-    with TemporaryDirectory(prefix="tmake-") as tmpdir:
+    with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
 
         # dir of current file
         cmake_tools_dir = os.path.dirname(os.path.abspath(__file__))

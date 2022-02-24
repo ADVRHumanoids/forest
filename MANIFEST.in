@@ -1,2 +1,3 @@
 recursive-include src/forest/recipes *
 recursive-include src/forest/cmake_tools/template *
+recursive-include src/forest/common *.bash

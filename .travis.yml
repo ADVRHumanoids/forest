@@ -1,0 +1,37 @@
+os: linux
+language: cpp
+compiler: g++
+
+jobs:
+  include:
+    - os: linux
+      dist: focal
+    - os: linux
+      dist: bionic
+
+branches:
+  only:
+    - al_devel
+    - /^v\d+\.\d+\.\d+.*$/  # version tags
+
+notifications:
+  email:
+    recipients:
+      - marco.ruzzon@iit.it
+      - arturo.laurenzi@iit.it
+    on_success: never
+    on_failure: never
+
+before_script:
+  - echo "Travis tag is $TRAVIS_TAG"
+  - sudo apt update && sudo apt install python3-pip python3-setuptools cmake patchelf python3-venv
+  - sudo pip3 install -U setuptools urllib3 requests  # tentative fix for RequestsDependencyWarning: urllib3 (1.26.8) or chardet (3.0.4) doesn't match a supported version!
+  - sudo pip3 install build twine
+  - sudo pip3 install .
+
+script: 
+  - set -e
+  - python3 test/test_run_bash_tests.py
+  - python3 -m build
+  - if [ -z $TRAVIS_TAG ] || [ "$(lsb_release -cs)" == "bionic" ]; then echo "Not a tag build, will not upload to pypi"; else twine upload -u __token__ -p $PYPI_TOKEN dist/*; fi
+
