@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import getpass
 import os
 import sys
 import argcomplete
@@ -8,10 +9,11 @@ from datetime import datetime
 from forest import cmake_tools
 from forest.common.eval_handler import EvalHandler
 
-from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file
-from forest.common.package import Package
-from forest.common import recipe
+from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file, uninstall_package, \
+    clean
+from forest.common.recipe import RecipeSource, Cookbook
 from forest.common import sudo_refresh
+from pprint import pprint
 
 # define directories for source, build, install, and recipes
 from forest.common.forest_dirs import *
@@ -27,17 +29,15 @@ def main():
         print('\nfailed (interrupted by user)')
         sys.exit(1)
 
+
 # actual main
 def do_main():
-
-    # create recipes file
-    recipe.CookBook.set_recipe_fname(rootdir, recipe_fname='recipes.yaml')
-    
+ 
     # set recipe dir
-    Package.set_recipe_path(recipesdir)
+    Cookbook.set_recipe_path(recipesdir)
 
     # available recipes
-    available_recipes = Package.get_available_recipes()
+    available_recipes = Cookbook.get_available_recipes()
     if len(available_recipes) == 0:
         available_recipes = None
 
@@ -48,26 +48,58 @@ def do_main():
 
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
     parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
-    parser.add_argument('recipe', nargs='?', choices=available_recipes, help='name of recipe with fetch and build information')
-    parser.add_argument('--add-recipes', '-a', nargs=2,  metavar=('URL', 'TAG'), required=False, help='fetch recipes from git repository; two arguments are required, i.e., <url> <tag> (e.g. git@github.com:<username>/<reponame>.git master or https://github.com/<username>/<reponame>.git master')
-    parser.add_argument('--update', '-u', required=False, action='store_true', help='update recipes')
-    parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
-    parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
-    parser.add_argument('--config', '-c', nargs='+', required=False, help='specify configuration variables that can be used inside recipes')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
-    parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
-    parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
-    parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
-    parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
-    parser.add_argument('--clone-depth', required=False, type=int, help='set maximum history depth to save bandwidth')
-    parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')        
-    parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
-    parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
-    parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required (if empty, user is prompted for password); note: to be used with care, as exposing your password might be harmful!')
+    parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
+
+    subparsers = parser.add_subparsers(dest='command')
+
+    grow_cmd = 'grow'
+    grow_parser = subparsers.add_parser(grow_cmd, help='add recipes from git remote')
+    grow_parser.add_argument('recipe', nargs='?', metavar='RECIPE', choices=available_recipes, help='name of recipe with fetch and build information')
+    grow_parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
+    grow_parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
+    grow_parser.add_argument('--config', '-c', nargs='+', required=False, help='specify configuration variables that can be used inside recipes')
+    grow_parser.add_argument('--default-build-type', '-t', default=buildtypes[1], choices=buildtypes, help='build type for cmake, it is overridden by recipe')
+    grow_parser.add_argument('--force-reconfigure', required=False, action='store_true', help='force calling cmake before building with args from the recipe')
+    grow_parser.add_argument('--list-eval-locals', required=False, action='store_true', help='print available attributes when using conditional build args')
+    grow_parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
+    grow_parser.add_argument('--clone-depth', required=False, type=int, help='set maximum history depth to save bandwidth')
+    grow_parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
+    grow_parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
+    grow_parser.add_argument('--uninstall', required=False, action='store_true', help='uninstall recipe')
+    grow_parser.add_argument('--clean', required=False, action='store_true', help='uninstall recipe and remove build')
+    grow_parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required (if empty, user is prompted for password); note: to be used with care, as exposing your password might be harmful!')
+
+    recipes_cmd = 'add-recipes'
+    recipes_parser = subparsers.add_parser(recipes_cmd, help='add recipes from git remote')
+    recipes_parser.add_argument('url', help='url of the remote (e.g. git@github.com:<username>/<reponame>.git)')
+    recipes_parser.add_argument('--tag', '-t', required=False, default='master')
+    recipes_parser.add_argument('--subdir-path', '-s', required=False, default='recipes', help='relative path to the folder in which recipes are contained')
+    recipes_parser.add_argument('--recipes', '-r', required=False, nargs='+', help='specify which recipes to add, otherwise all recipes in subdir-path are added')
+    recipes_parser.add_argument('--allow-overwrite', '-o', required=False, action='store_true', help='allow overwritng local recipes with new ones')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
+
+    # initialize workspace
+    if args.init:
+        # create marker file
+        write_ws_file(rootdir=rootdir)  # note: error on failure?
+
+    # check ws
+    if not check_ws_file(rootdir=rootdir):
+        print(f'current directory {rootdir} is not a forest workspace.. \
+    have you called forest --init ?', file=sys.stderr)
+        return False
+
+    # create directories (if do not exist)
+    for dir in (buildroot, installdir, srcroot, recipesdir):
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
+    # create setup.bash if does not exist
+    write_setup_file()
 
     # verbose mode will show output of any called process
     if args.verbose:
@@ -78,106 +110,91 @@ def do_main():
         from forest.common import print_utils
         print_utils.log_file = open(args.log_file, 'w')
 
-    # sudo handling
-    if args.pwd is not None:
+    # sudo handling 
+    if args.command == grow_cmd and args.pwd is not None:
         sudo_refresher = sudo_refresh.SudoRefresher(pwd=args.pwd)
 
     # print available packages
     if args.list:
-        print(' '.join(Package.get_available_recipes()))
+        print(' '.join(Cookbook.get_available_recipes()))
         return True
 
     # set config vars
-    if args.config:
+    if args.command == grow_cmd and args.config:
         from forest.common import config_handler
         ch = config_handler.ConfigHandler.instance()
         ch.set_config_variables(args.config)
 
     # print available local attributes for conditional args
-    if args.list_eval_locals:
+    if args.command == grow_cmd and args.list_eval_locals:
         from forest.common import eval_handler
         eval_handler.EvalHandler.print_available_locals()
         return True
 
-    # initialize workspace
-    if args.init:
-
-        # create marker file
-        write_ws_file(rootdir=rootdir)  # note: error on failure?
-
-    # check ws
-    if not check_ws_file(rootdir=rootdir):
-        print(f'current directory {rootdir} is not a forest workspace.. \
-have you called forest --init ?', file=sys.stderr)
-        return False
-
-    # create directories
-    for dir in (buildroot, installdir, srcroot, recipesdir):
-        if not os.path.exists(dir):
-            os.mkdir(dir)
-
-    # create setup.bash if does not exist
-    write_setup_file()
-
     # clone proto
-    if args.clone_protocol is not None:
+    if args.command == grow_cmd and args.clone_protocol is not None:
         from forest.common.fetch_handler import GitFetcher
         GitFetcher.proto_override = args.clone_protocol
 
     # clone proto
-    if args.clone_depth is not None:
+    if args.command == grow_cmd and args.clone_depth is not None:
         from forest.common.fetch_handler import GitFetcher
         GitFetcher.depth_override = args.clone_depth
 
     # if required, add a recipe repository to the list of remotes
-    if args.add_recipes is not None:
+    if args.command == recipes_cmd:
         print('adding recipes...')
-        if not recipe.CookBook.add_recipes(entries=args.add_recipes):
-            return False
-
-    # if required, update recipes
-    if args.update:
-        print('updating recipes...')
-        if not recipe.CookBook.update_recipes():
-            return False
+        recipe_source = RecipeSource.FromUrl(args.url, args.tag)
+        return Cookbook.add_recipes(recipe_source, args.recipes, args.subdir_path, args.allow_overwrite)
 
     # no recipe to install, exit
-    if args.recipe is None:
+    if args.command == grow_cmd and args.recipe is None:
         print('no recipe to build, exiting...')
         return True
 
+    # uninstall functionality
+    if args.command == grow_cmd and args.uninstall:
+        return uninstall_package(pkg=args.recipe,
+                                 buildroot=buildroot,
+                                 installdir=installdir,
+                                 verbose=args.verbose)
+
+    # clean functionality
+    if args.command == grow_cmd and args.clean:
+        return clean(pkg=args.recipe,
+                     buildroot=buildroot,
+                     installdir=installdir,
+                     verbose=args.verbose)
+
     # handle modes
-    if args.mode is not None:
+    if args.command == grow_cmd and args.mode is not None:
         EvalHandler.modes = set(args.mode)
 
     # default cmake args
-    if args.cmake_args:
+    if args.command == grow_cmd and args.cmake_args:
         cmake_tools.CmakeTools.set_default_args(['-D' + a for a in args.cmake_args])
-
-    # pwd
-    if args.pwd:
-        from forest.common.fetch_handler import DebFetcher
-        DebFetcher.pwd = args.pwd
 
     # check ws is sourced
     if rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
         print('[warn] forest workspace does not appear to be sourced')
 
     # print jobs
-    print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
+    if args.command == grow_cmd:
+        
+        print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
 
-    # perform required installation
-    success = install_package(pkg=args.recipe,
-                                srcroot=srcroot,
-                                buildroot=buildroot,
-                                installdir=installdir,
-                                buildtype=args.default_build_type,
-                                jobs=args.jobs,
-                                reconfigure=args.force_reconfigure,
-                                no_deps=args.no_deps
-                                )
+        # perform required installation
+        success = install_package(pkg=args.recipe,
+                                  srcroot=srcroot,
+                                  buildroot=buildroot,
+                                  installdir=installdir,
+                                  buildtype=args.default_build_type,
+                                  jobs=args.jobs,
+                                  reconfigure=args.force_reconfigure,
+                                  no_deps=args.no_deps
+                                  )
 
-    return success
+        return success
 
 
 if __name__ == '__main__':

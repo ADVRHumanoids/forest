@@ -4,6 +4,8 @@ from forest.cmake_tools import CmakeTools
 from . import package
 from .print_utils import ProgressReporter
 from .forest_dirs import *
+from forest.common import proc_utils
+from forest.common.recipe import Cookbook
 
 _build_cache = dict()
 
@@ -13,15 +15,16 @@ def build_package(pkg: package.Package,
                   installdir: str,
                   buildtype: str,
                   jobs: int,
-                  reconfigure=False):
+                  reconfigure=False,
+                  pwd=None):
 
     # source dir and build dir
     srcdir = os.path.join(srcroot, pkg.name)
     builddir = os.path.join(buildroot, pkg.name)
 
     # doit!
-    return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir, 
-                      buildtype=buildtype, jobs=jobs, reconfigure=reconfigure)
+    return pkg.builder.build(srcdir=srcdir, builddir=builddir, installdir=installdir,
+                      buildtype=buildtype, jobs=jobs, reconfigure=reconfigure, pwd=pwd)
 
 
 
@@ -34,7 +37,8 @@ def install_package(pkg: str,
                     buildtype: str,
                     jobs: int,
                     reconfigure=False, 
-                    no_deps=False):
+                    no_deps=False,
+                    pwd=None):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -52,7 +56,7 @@ def install_package(pkg: str,
     try:
         pkg = package.Package.from_name(name=pkg)
     except FileNotFoundError:
-        pprint(f'recipe file not found (searched in {package.Package.get_recipe_path()})')
+        pprint(f'recipe file not found (searched in {Cookbook.get_recipe_path()})')
         return False
 
     # install dependencies if not found
@@ -91,7 +95,7 @@ def install_package(pkg: str,
             
             # note: reconfigure needed if there's build but not install
             ok = install_package(dep, srcroot, buildroot, installdir, 
-                    buildtype, jobs, reconfigure)   
+                    buildtype, jobs, reconfigure, pwd=pwd)
 
             if not ok:
                 pprint(f'failed to install dependency {dep}')
@@ -101,9 +105,8 @@ def install_package(pkg: str,
             # dependency found and not built by forest -> nothing to do
             pprint(f'depends on {dep} -> found')
     
-    # use the fetcher! (if not build only)
     srcdir = os.path.join(srcroot, pkg.name)
-    if not pkg.fetcher.fetch(srcdir):
+    if not pkg.fetcher.fetch(srcdir, pwd=pwd):
         pprint('failed to fetch package')
         return False 
     
@@ -114,13 +117,91 @@ def install_package(pkg: str,
                        installdir=installdir, 
                        buildtype=buildtype, 
                        jobs=jobs, 
-                       reconfigure=reconfigure)
+                       reconfigure=reconfigure,
+                       pwd=pwd)
 
     if ok:
         pprint('ok')
 
     return ok
 
+
+def uninstall_package(pkg: str,
+                      buildroot: str,
+                      installdir: str,
+                      verbose: bool):
+
+    # custom print
+    pprint = ProgressReporter.get_print_fn(pkg)
+
+    try:
+        pkg = package.Package.from_name(name=pkg)
+    except FileNotFoundError:
+        pprint(f'recipe file not found (searched in {Cookbook.get_recipe_path()})')
+        return False
+
+    builddir = os.path.join(buildroot, pkg.name)
+    manifest_fname = os.path.join(builddir, 'install_manifest.txt')
+    if not os.path.isfile(manifest_fname):
+        pprint(f'missing install_manifest.txt: {manifest_fname}')
+        return False
+
+    error = False
+    with open(manifest_fname, 'r') as manifest:
+        for file in manifest.readlines():
+            fname = str(file).rstrip()
+            if not _remove_fname(pkg.name, fname, installdir, verbose):
+                error = True
+
+    if not error:
+        pprint('uninstalled successfully')
+        return True
+
+    pprint('errors occurred during uninstallation')
+    return False
+
+
+def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
+
+    # custom print
+    pprint = ProgressReporter.get_print_fn(pkg)
+
+    if fname == installdir:
+        return True
+
+    if not os.path.exists(fname):
+        pprint(f'removing:  {fname} --> no such file or directory')
+        fname = os.path.split(fname)[0]
+        return _remove_fname(pkg, fname, installdir, verbose)
+
+    elif not os.path.isdir(fname) or len(os.listdir(fname)) == 0:
+        pprint(f'removing:  {fname}', end="")
+        cmd = ['rm', '-r', fname]
+        ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+        if ok:
+            print(' --> done')
+            fname = os.path.split(fname)[0]
+            return _remove_fname(pkg, fname, installdir, verbose)
+
+        else:
+            print(' --> error removing file or directory')
+            return False
+
+    return True
+
+
+def clean(pkg: str, buildroot: str,  installdir: str, verbose: bool):
+    pprint = ProgressReporter.get_print_fn(pkg)
+    pprint(f'cleaning..')
+    if uninstall_package(pkg=pkg, buildroot=buildroot, installdir=installdir, verbose=verbose):
+        builddir = os.path.join(buildroot, pkg)
+        pprint(f'removing build directory: {builddir}')
+        cmd = ['rm', '-r', builddir]
+        ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+        pprint('cleaning complete') if ok else print('error occurred during cleaning')
+        return ok
+
+    return False
 
 def write_setup_file():
     
@@ -168,4 +249,3 @@ def write_ws_file(rootdir):
     with open(ws_file, 'w') as f:
         f.write('# forest marker file \n')
         return True
-

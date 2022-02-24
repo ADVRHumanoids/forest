@@ -1,5 +1,8 @@
 import subprocess
-import sys 
+import sys
+import getpass
+import re
+
 from forest.common import print_utils
 
 call_process_verbose = False
@@ -75,3 +78,34 @@ def get_output(args, cwd='.', input=None, verbose=False, print_on_error=True, sh
             print('stdout: ' + e.output.decode(), file=sys.stderr)
             print('stderr: ' + e.stderr.decode(), file=sys.stderr)
         return None
+
+
+def get_pwd(cmd, pwd, superuser='root'):
+    if isinstance(cmd, str):
+        sudo = re.search('\s*(sudo)\s*', cmd)
+        if sudo is not None:
+            cmd = 'sudo -Sv && ' + cmd + ' && sudo -k '
+
+    elif isinstance(cmd, list):
+        sudo = 'sudo' in cmd
+        cmd = ['sudo', '-Sv', '&&'] + cmd + ['&&', 'sudo', '-k']
+
+    else:
+        raise TypeError(f'Wrong cmd type {cmd.__class__.__name__}')
+
+    if sudo:
+        if getpass.getuser() == superuser:
+            return cmd, None
+
+        elif pwd is not None:
+            return cmd, encode_pwd(pwd)
+
+        else:
+            return cmd, encode_pwd(getpass.getpass())
+
+    else:
+        return cmd, None
+
+
+def encode_pwd(pwd):
+    return (pwd + '\n').encode()

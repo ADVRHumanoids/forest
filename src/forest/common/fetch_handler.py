@@ -7,6 +7,7 @@ from forest.common import proc_utils
 from forest.common.print_utils import ProgressReporter
 from forest.common.eval_handler import EvalHandler
 
+
 class FetchHandler:
     
     """
@@ -35,7 +36,7 @@ class FetchHandler:
         self.symlink_dst = None
 
     
-    def fetch(self, srcdir):
+    def fetch(self, srcdir, username=None, pwd=None):
         """
         Fetch the package if srcdir does not exist. Afterwards, carry out
         post-fetch operations according to the recipe.

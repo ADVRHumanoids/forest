@@ -1,1 +1,0 @@
-docker pull ros:melodic-desktop-full-bionic
