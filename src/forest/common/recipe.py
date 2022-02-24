@@ -261,7 +261,7 @@ def _clone_recipes_src(recipe_src: RecipeSource, destination: str) -> bool:
         # clone
         g = GitTools(destination)
         repo = os.path.join(recipe_src.username, recipe_src.repository) + '.git'
-        if not g.clone(recipe_src.server, repo, branch=recipe_src.tag, single_branch=True, proto=proto):
+        if not g.clone(recipe_src.server, repo, tag=recipe_src.tag, single_branch=True, proto=proto):
             raise RuntimeError(f'{recipe_src}: recipes source code clone failed')
 
         print(f'{recipe_src.repository}/{recipe_src.tag}: recipes source code successfully cloned')
@@ -271,7 +271,15 @@ def _clone_recipes_src(recipe_src: RecipeSource, destination: str) -> bool:
 def _symlink_recipe(recipe_fname: str, file_folder: str, link_folder: str) -> bool:
     if not _has_yaml_ext(recipe_fname):
         raise ValueError(f'recipe_fname: {recipe_fname} must have .yaml extension')
-    cmd = ['ln', '-fs', os.path.join(file_folder, recipe_fname), os.path.join(link_folder, recipe_fname)]
+    
+    symlink_src = os.path.join(file_folder, recipe_fname)
+    symlink_dst = os.path.join(link_folder, recipe_fname)
+    
+    dst_exists = os.path.exists(symlink_dst)
+    verb = 'updating' if dst_exists else 'adding'
+    print(f'{verb} recipe {recipe_fname}')
+    
+    cmd = ['ln', '-fs', symlink_src, symlink_dst]
     return proc_utils.call_process(cmd)
 
 
