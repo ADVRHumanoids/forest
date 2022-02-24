@@ -8,6 +8,8 @@ if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
   exit 1
 fi
 
+echo "Created temp working directory $WORK_DIR"
+
 # deletes the temp directory
 function workdir_cleanup {      
   rm -rf "$WORK_DIR"

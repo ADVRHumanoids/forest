@@ -1,0 +1,6 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/forest-test.git
+  tag: ros_pkg
+  ros_src: true
