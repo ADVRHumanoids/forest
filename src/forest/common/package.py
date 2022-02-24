@@ -111,6 +111,8 @@ class Package(BasicPackage):
         name = os.path.splitext(os.path.basename(file))[0]
         with open(file, 'r') as f:
             yaml_dict = yaml.safe_load(f.read())
+            if yaml_dict is None:
+                yaml_dict = dict()
             return Package.from_yaml(name=name, recipe=yaml_dict)
 
     @staticmethod
