@@ -176,12 +176,12 @@ def do_main():
     if args.command == grow_cmd and args.cmake_args:
         cmake_tools.CmakeTools.set_default_args(['-D' + a for a in args.cmake_args])
 
-    # check ws is sourced
-    if rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
-        print('[warn] forest workspace does not appear to be sourced')
-
     # print jobs
     if args.command == grow_cmd:
+
+        # check ws is sourced
+        if rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
+            print('[warn] forest workspace does not appear to be sourced')
         
         print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
 
