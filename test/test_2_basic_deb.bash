@@ -12,7 +12,7 @@ source $TEST_DIR/common.bash
 cd $WORK_DIR
 pwd 
 
-forest --init
+forest init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
 sudo apt remove -y sl || true

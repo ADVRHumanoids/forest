@@ -13,7 +13,7 @@ cd $WORK_DIR
 pwd 
 
 # initialize workspace
-forest --init
+forest init
 
 # check expected files and folders do exist
 if [ ! -f $WORK_DIR/setup.bash ]; then exit 1; fi

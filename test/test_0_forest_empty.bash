@@ -12,7 +12,7 @@ source $TEST_DIR/common.bash
 cd $WORK_DIR
 
 # initialize workspace
-forest --init
+forest init
 
 # copy recipes
 cp $TEST_DIR/recipes/*.yaml recipes 

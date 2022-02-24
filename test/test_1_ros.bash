@@ -12,7 +12,7 @@ source $TEST_DIR/common.bash
 cd $WORK_DIR
  
 
-forest --init
+forest init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
 forest grow ros_pkg --verbose

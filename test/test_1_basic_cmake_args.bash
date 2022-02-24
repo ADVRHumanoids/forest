@@ -13,7 +13,7 @@ source $TEST_DIR/common.bash
 cd $WORK_DIR
 pwd 
 
-forest --init
+forest init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
 forest grow forest_test --verbose
@@ -25,7 +25,7 @@ source $TEST_DIR/common.bash
 cd $WORK_DIR
 pwd 
 
-forest --init
+forest init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
 forest grow forest_test --cmake-args INSTALL_B_FILE=ON --verbose  # this cmake arg triggers installation of b_file

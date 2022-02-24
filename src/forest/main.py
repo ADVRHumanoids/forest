@@ -47,15 +47,18 @@ def do_main():
     dfl_log_file = datetime.now().strftime("/tmp/forest_%Y_%m_%d_%H_%M_%S.log")
 
     parser = argparse.ArgumentParser(description='forest automatizes cloning and building of software packages')
-    parser.add_argument('--init', '-i', required=False, action='store_true', help='initialize the workspace only')
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
 
     subparsers = parser.add_subparsers(dest='command')
 
+    init_cmd = 'init'
+    init_parser = subparsers.add_parser(init_cmd, help='initialize the current folder as a forest workspace')
+
+
     grow_cmd = 'grow'
-    grow_parser = subparsers.add_parser(grow_cmd, help='add recipes from git remote')
+    grow_parser = subparsers.add_parser(grow_cmd, help='clone, configure, and build a recipe')
     grow_parser.add_argument('recipe', nargs='?', metavar='RECIPE', choices=available_recipes, help='name of recipe with fetch and build information')
     grow_parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     grow_parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
@@ -85,7 +88,7 @@ def do_main():
     args = parser.parse_args()
 
     # initialize workspace
-    if args.init:
+    if args.command == init_cmd:
         # create marker file
         write_ws_file(rootdir=rootdir)  # note: error on failure?
 
