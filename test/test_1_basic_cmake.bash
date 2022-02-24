@@ -15,7 +15,7 @@ pwd
 forest --init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
-forest forest_test --verbose
+forest grow forest_test --verbose
 if [ ! -f $WORK_DIR/install/share/forest_test/a_file.txt ]; then exit 1; fi
 
 # test 2
@@ -26,7 +26,7 @@ pwd
 forest --init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
-forest forest_test --verbose --clone-depth 1
+forest grow forest_test --verbose --clone-depth 1
 if [ ! -f $WORK_DIR/install/share/forest_test/a_file.txt ]; then exit 1; fi
 
 

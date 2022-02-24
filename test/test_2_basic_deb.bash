@@ -17,7 +17,7 @@ source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
 sudo apt remove -y sl || true
 ! dpkg -s sl
-forest sl_from_apt --verbose
+forest grow sl_from_apt --verbose
 dpkg -s sl 
 
 SUCCESS=1

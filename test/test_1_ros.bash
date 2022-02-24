@@ -15,7 +15,7 @@ cd $WORK_DIR
 forest --init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
-forest ros_pkg --verbose
+forest grow ros_pkg --verbose
 
 tree || true
 if [ ! -f $WORK_DIR/ros_src/ros_pkg/CMakeLists.txt ]; then exit 1; fi

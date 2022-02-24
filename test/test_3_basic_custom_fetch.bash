@@ -15,7 +15,7 @@ pwd
 forest --init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
-forest custom_fetch --verbose
+forest grow custom_fetch --verbose
 
 if [ ! -f $WORK_DIR/src/custom_fetch/a_file.txt ]; then exit 1; fi
 if [ ! -f $WORK_DIR/src/custom_fetch/b_file.txt ]; then exit 1; fi

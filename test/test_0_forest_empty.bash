@@ -21,6 +21,6 @@ cp $TEST_DIR/recipes/*.yaml recipes
 source setup.bash 
 
 # test empty recipe
-forest empty
+forest grow empty
 
 SUCCESS=1

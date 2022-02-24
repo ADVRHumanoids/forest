@@ -15,7 +15,7 @@ pwd
 forest --init
 source setup.bash
 cp $TEST_DIR/recipes/*.yaml recipes 
-forest forest_test_with_dep --verbose
+forest grow forest_test_with_dep --verbose
 if [ ! -f $WORK_DIR/install/share/forest_test/a_file.txt ]; then exit 1; fi
 if [ ! -f $WORK_DIR/install/share/forest_test_with_dep/a_file.txt ]; then exit 1; fi
 
