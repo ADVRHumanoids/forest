@@ -221,17 +221,17 @@ class CmakeBuilder(BuildHandler):
         cmake = CmakeTools(srcdir=cmakelists, builddir=builddir)
 
         # configure
+        cmake_args = list()
         if not cmake.is_configured() or reconfigure:
             # set install prefix and build type (only on first or forced configuration)
-            cmake_args = list()
             cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
             cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
             cmake_args += self.cmake_args  # note: flags from recipes as last entries to allow override
 
-            self.pprint('running cmake...')
-            if not cmake.configure(args=cmake_args):
-                self.pprint('configuring failed')
-                return False
+        self.pprint('running cmake...')
+        if not cmake.configure(args=cmake_args):
+            self.pprint('configuring failed')
+            return False
 
         # pre-build
         self.pre_build(builddir)
