@@ -112,8 +112,6 @@ class FetchHandler:
         # create symlink if necessary
         ros_src = data.get('ros_src', None)
 
-        print(ros_src)
-
         if ros_src is not None:
             
             # evaluator

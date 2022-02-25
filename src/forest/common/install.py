@@ -81,7 +81,7 @@ def install_package(pkg: str,
 
         # if no-deps mode, skip dependency installation
         if no_deps:
-            pprint('skipping dependencies')
+            pprint(f'skipping dependency {dep}')
             continue
         
         # try to find-package this dependency
