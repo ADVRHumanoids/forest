@@ -23,7 +23,7 @@ cd $WORK_DIR
 
 # clone recipes (default)
 forest init
-forest add-recipes git@github.com:advrhumanoids/forest-test.git -t recipes --clone-protocol https
+forest add-recipes git@github.com:advrhumanoids/forest-test.git -t recipes --clone-protocol https -v
 forest grow my_test_pkg
 
 SUCCESS=1
