@@ -96,7 +96,7 @@ def do_main():
     # check ws
     if not check_ws_file(rootdir=rootdir):
         print(f'current directory {rootdir} is not a forest workspace.. \
-    have you called forest --init ?', file=sys.stderr)
+    have you called forest init ?', file=sys.stderr)
         return False
 
     # create directories (if do not exist)
