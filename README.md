@@ -2,11 +2,11 @@
 The forest project aims at automatizing the clone and build process for open source software. Differently from other systems such as [Conda](https://docs.conda.io/en/latest/), or [Conan](https://conan.io/), it is a non-intrusive system which does not aim at environment management. 
 
 ## Quickstart
-
+Install the `xbot2_examples` recipe. Optional arguments are surrounded by [square brackets].
  - `[sudo] pip3 install hhcm-forest`
  - `mkdir my_ws && cd my_ws` 
  - `forest init`
- - `forest add-recipes git@github.com:advrhumanoids/multidof_recipes.git [--tag <tag>]`
+ - `forest add-recipes git@github.com:advrhumanoids/multidof_recipes.git [--tag master]`
  - `forest grow xbot2_examples [-j8] [--clone-protocol https]`
  
 ## Command line interface
