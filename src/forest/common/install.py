@@ -166,7 +166,7 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
     if fname == installdir:
         return True
 
-    if not os.path.exists(fname):
+    if not os.path.islink(fname) and not os.path.exists(fname):
         pprint(f'removing:  {fname} --> no such file or directory')
         fname = os.path.split(fname)[0]
         return _remove_fname(pkg, fname, installdir, verbose)
