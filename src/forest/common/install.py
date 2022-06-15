@@ -190,15 +190,34 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
 def clean(pkg: str, buildroot: str,  installdir: str, verbose: bool):
     pprint = ProgressReporter.get_print_fn(pkg)
     pprint(f'cleaning..')
-    if uninstall_package(pkg=pkg, buildroot=buildroot, installdir=installdir, verbose=verbose):
-        builddir = os.path.join(buildroot, pkg)
-        pprint(f'removing build directory: {builddir}')
-        cmd = ['rm', '-r', builddir]
-        ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
-        pprint('cleaning complete') if ok else print('error occurred during cleaning')
-        return ok
+    if not uninstall_package(pkg=pkg, buildroot=buildroot, installdir=installdir, verbose=verbose):
+        pprint('uninstall failed')
 
-    return False
+        while True:
+            remove_build = input('Do you want to remove build dir anyway? yes or no\n')
+            if remove_build in ('y', 'yes'):
+                return _remove_buildir(pkg, verbose)
+
+            elif remove_build in ('no', 'n'):
+                return True
+
+            else:
+                print('INVALID INPUT: valid options are {yes, y, no, n}\n')
+
+    return _remove_buildir(pkg, verbose)
+
+
+def _remove_buildir(pkg, verbose):
+    builddir = os.path.join(buildroot, pkg)
+    pprint = ProgressReporter.get_print_fn(pkg)
+    pprint(f'removing build directory: {builddir}')
+    cmd = ['rm', '-r', builddir]
+    ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+    if ok:
+        pprint('build directory removed successfully')
+
+    return ok
+
 
 def write_setup_file():
     
