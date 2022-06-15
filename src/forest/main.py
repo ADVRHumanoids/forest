@@ -15,6 +15,10 @@ from forest.common.recipe import RecipeSource, Cookbook
 from forest.common import sudo_refresh
 from pprint import pprint
 
+from configparser import ConfigParser
+from pathlib import Path
+from pkg_resources import get_distribution
+
 # define directories for source, build, install, and recipes
 from forest.common.forest_dirs import *
 
@@ -50,6 +54,7 @@ def do_main():
     parser.add_argument('--list', '-l', required=False, action='store_true', help='list available recipes')
     parser.add_argument('--log-file', default=dfl_log_file, help='log file for non-verbose mode')
     parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
+    parser.add_argument('--version', required=False, action='store_true', help='print forest version')
 
     subparsers = parser.add_subparsers(dest='command')
 
@@ -92,6 +97,22 @@ def do_main():
     if args.command == init_cmd:
         # create marker file
         write_ws_file(rootdir=rootdir)  # note: error on failure?
+
+    if args.version:
+        config = ConfigParser()
+        src_path = Path(os.path.abspath(__file__)).parent.parent
+        root_path = src_path.parent
+        cfg_path = os.path.join(root_path, 'setup.cfg')
+        config.read(cfg_path)
+        try:
+            version = f"hhcm-forest {config['metadata']['version']} ({src_path})"
+
+        except KeyError:
+            version = get_distribution('hhcm-forest')
+
+        print(version)
+
+        return True
 
     # check ws
     if not check_ws_file(rootdir=rootdir):
