@@ -38,7 +38,7 @@ def main():
 def do_main():
  
     # set recipe dir
-    Cookbook.set_recipe_path(recipesdir)
+    Cookbook.set_recipe_basedir(recipesdir)
 
     # available recipes
     available_recipes = Cookbook.get_available_recipes()
@@ -84,9 +84,6 @@ def do_main():
     recipes_parser = subparsers.add_parser(recipes_cmd, help='add recipes from git remote')
     recipes_parser.add_argument('url', help='url of the remote (e.g. git@github.com:<username>/<reponame>.git)')
     recipes_parser.add_argument('--tag', '-t', required=False, default='master')
-    recipes_parser.add_argument('--subdir-path', '-s', required=False, default='recipes', help='relative path to the folder in which recipes are contained')
-    recipes_parser.add_argument('--recipes', '-r', required=False, nargs='+', help='specify which recipes to add, otherwise all recipes in subdir-path are added')
-    recipes_parser.add_argument('--allow-overwrite', '-o', required=False, action='store_true', help='allow overwritng local recipes with new ones')
     recipes_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     recipes_parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
 
@@ -172,7 +169,7 @@ def do_main():
     if args.command == recipes_cmd:
         print('adding recipes...')
         recipe_source = RecipeSource.FromUrl(args.url, args.tag)
-        return Cookbook.add_recipes(recipe_source, args.recipes, args.subdir_path, args.allow_overwrite)
+        return Cookbook.add_recipes(recipe_source)
 
     # no recipe to install, exit
     if args.command == grow_cmd and args.recipe is None:
