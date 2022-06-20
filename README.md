@@ -24,13 +24,10 @@ Initialize the current folder as a forest workspace, i.e. it creates
  - a `setup.bash` file which makes installed items visible to the system
  
  ### forest add-recipes
- Adds recipes from a remote. TODO @MarcoRuzzon
+ Adds recipes from a remote.
 
  ```bash
- usage: forest add-recipes [-h] [--tag TAG] [--subdir-path SUBDIR_PATH]
-                          [--recipes RECIPES [RECIPES ...]]
-                          [--allow-overwrite] [--verbose]
-                          url
+ usage: forest add-recipes [-h] [--tag TAG] [--verbose] [--clone-protocol {ssh,https}] url
 
 positional arguments:
   url                   url of the remote (e.g.
@@ -39,14 +36,6 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --tag TAG, -t TAG
-  --subdir-path SUBDIR_PATH, -s SUBDIR_PATH
-                        relative path to the folder in which recipes are
-                        contained
-  --recipes RECIPES [RECIPES ...], -r RECIPES [RECIPES ...]
-                        specify which recipes to add, otherwise all recipes in
-                        subdir-path are added
-  --allow-overwrite, -o
-                        allow overwritng local recipes with new ones
   --verbose, -v         print additional information
 
 ```
