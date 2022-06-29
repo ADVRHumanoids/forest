@@ -14,7 +14,7 @@ pwd
 
 forest init
 source setup.bash
-cp $TEST_DIR/recipes/*.yaml recipes 
+cp -r $TEST_DIR/recipes recipes
 sudo apt remove -y sl || true
 ! dpkg -s sl
 forest grow sl_from_apt --verbose
