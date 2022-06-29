@@ -15,7 +15,7 @@ cd $WORK_DIR
 forest init
 
 # copy recipes
-cp $TEST_DIR/recipes/*.yaml recipes 
+cp -r $TEST_DIR/recipes recipes
 
 # check expected files and folders do exist
 source setup.bash 

@@ -14,7 +14,7 @@ pwd
 
 forest init
 source setup.bash
-cp $TEST_DIR/recipes/*.yaml recipes 
+cp -r $TEST_DIR/recipes recipes
 forest grow custom_build --verbose -j 2
 
 if [ ! -f $WORK_DIR/src/custom_build/a_file_2.txt ]; then exit 1; fi

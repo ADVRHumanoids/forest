@@ -134,7 +134,7 @@ def uninstall_package(pkg: str,
     try:
         pkg = package.Package.from_name(name=pkg)
     except FileNotFoundError:
-        pprint(f'recipe file not found (searched in {Cookbook.get_recipe_path()})')
+        pprint(f'recipe file not found (searched in {Cookbook.get_recipe_basedir()})')
         return False
 
     builddir = os.path.join(buildroot, pkg.name)

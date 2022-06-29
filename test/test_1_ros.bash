@@ -14,7 +14,7 @@ cd $WORK_DIR
 
 forest init
 source setup.bash
-cp $TEST_DIR/recipes/*.yaml recipes 
+cp -r $TEST_DIR/recipes recipes
 forest grow ros_pkg --verbose
 
 tree || true

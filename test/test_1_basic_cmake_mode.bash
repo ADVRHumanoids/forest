@@ -15,7 +15,7 @@ pwd
 
 forest init
 source setup.bash
-cp $TEST_DIR/recipes/*.yaml recipes 
+cp -r $TEST_DIR/recipes recipes
 forest grow forest_test --verbose
 if [ ! -f $WORK_DIR/install/share/forest_test/a_file.txt ]; then exit 1; fi
 if [ -f $WORK_DIR/install/share/forest_test/b_file.txt ]; then exit 1; fi
@@ -27,7 +27,7 @@ pwd
 
 forest init
 source setup.bash
-cp $TEST_DIR/recipes/*.yaml recipes 
+cp -r $TEST_DIR/recipes recipes
 forest grow forest_test -m opt_b --verbose
 if [ ! -f $WORK_DIR/install/share/forest_test/a_file.txt ]; then exit 1; fi
 if [ ! -f $WORK_DIR/install/share/forest_test/b_file.txt ]; then exit 1; fi
