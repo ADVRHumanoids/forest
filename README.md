@@ -30,8 +30,8 @@ Initialize the current folder as a forest workspace, i.e. it creates
  usage: forest add-recipes [-h] [--tag TAG] [--verbose] url
 
 positional arguments:
-  url                   url of the remote (e.g.
-                        git@github.com:<username>/<reponame>.git)
+  url                   url of the remote (e.g. git@github.com:<username>/<reponame>.git 
+                        or https://github.com/<username>/<reponame>.git)
 
 optional arguments:
   -h, --help            show this help message and exit
