@@ -82,10 +82,9 @@ def do_main():
 
     recipes_cmd = 'add-recipes'
     recipes_parser = subparsers.add_parser(recipes_cmd, help='add recipes from git remote')
-    recipes_parser.add_argument('url', help='url of the remote (e.g. git@github.com:<username>/<reponame>.git)')
+    recipes_parser.add_argument('url', help='url of the remote (e.g. git@github.com:<username>/<reponame>.git or https://github.com/<username>/<reponame>.git)')
     recipes_parser.add_argument('--tag', '-t', required=False, default='master')
     recipes_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
-    recipes_parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -156,7 +155,7 @@ def do_main():
         return True
 
     # clone proto
-    if args.command in (grow_cmd, recipes_cmd) and args.clone_protocol is not None:
+    if args.command == grow_cmd and args.clone_protocol is not None:
         from forest.common.fetch_handler import GitFetcher
         GitFetcher.proto_override = args.clone_protocol
 

@@ -22,11 +22,12 @@ class UserInterrupt(Exception):
 
 
 class RecipeSource:
-    def __init__(self, server: str, username: str, repository: str, tag: str):
+    def __init__(self, server: str, username: str, repository: str, tag: str, protocol: str):
         self.server = server
         self.username = username
         self.repository = repository
         self.tag = tag
+        self.protocol = protocol
 
     def __str__(self):
         return f"{self.server}%{self.repository}%{self.tag}"
@@ -45,18 +46,23 @@ class RecipeSource:
         """
 
         git_addr = url
-        good_patterns = ['git@{}:{}/{}.git', 'https://{}/{}/{}.git']
+        good_patterns = ['git@{}:{}/{}.git', '{}://{}/{}/{}.git']
         parse_result_ssh = parse(good_patterns[0], git_addr)
         parse_result_https = parse(good_patterns[1], git_addr)
 
         if parse_result_ssh is not None:
+            protocol = 'ssh'
             server, username, repository = parse_result_ssh
         elif parse_result_https is not None:
-            server, username, repository = parse_result_https
+            protocol, server, username, repository = parse_result_https
         else:
             raise ValueError(f'could not parse git repository from given args {url}')
 
-        return cls(server, username, repository, tag)
+        return cls(server=server,
+                   username=username,
+                   repository=repository,
+                   tag=tag,
+                   protocol=protocol)
 
 
 # class Recipe:
@@ -131,20 +137,14 @@ class Cookbook:
         return True
 
 
-def _clone_recipes_src(recipe_src: RecipeSource, destination: str) -> bool:
-    # git clone proto (we take it from git fetcher)
-    from forest.common.fetch_handler import GitFetcher
-    proto = GitFetcher.proto_override
-    if proto is None:
-        proto = 'ssh'
-
+def _clone_recipes_src(recipe_src: RecipeSource, destination: str):
     # clone
     g = GitTools(destination)
     repo = os.path.join(recipe_src.username, recipe_src.repository) + '.git'
-    if not g.clone(recipe_src.server, repo, tag=recipe_src.tag, proto=proto):
+    if not g.clone(recipe_src.server, repo, tag=recipe_src.tag, proto=recipe_src.protocol):
         raise RuntimeError(f'{recipe_src}: recipes source code clone failed')
 
-    print(f'{recipe_src.repository}/{recipe_src.tag}: recipes source code successfully cloned')
+    print(f'{recipe_src.repository} ({recipe_src.tag}): recipes source code successfully cloned')
 
 
 def _find_path_to_dir(basedir, dirname):

@@ -27,7 +27,7 @@ Initialize the current folder as a forest workspace, i.e. it creates
  Adds recipes from a remote.
 
  ```bash
- usage: forest add-recipes [-h] [--tag TAG] [--verbose] [--clone-protocol {ssh,https}] url
+ usage: forest add-recipes [-h] [--tag TAG] [--verbose] url
 
 positional arguments:
   url                   url of the remote (e.g.
