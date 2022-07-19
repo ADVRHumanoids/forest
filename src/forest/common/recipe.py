@@ -124,7 +124,7 @@ class Cookbook:
             return False
 
         if os.listdir(cls.get_recipe_basedir()):
-            print(f"recipes' repo already in {cls.get_recipe_basedir()}: remove it if you want to add a different one")
+            print(f"recipes' repository already in '{cls.get_recipe_basedir()}':\nremove it if you want to add a different one")
             return False
 
         try:
