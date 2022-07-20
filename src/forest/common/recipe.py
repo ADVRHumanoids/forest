@@ -148,6 +148,6 @@ def _clone_recipes_src(recipe_src: RecipeSource, destination: str):
 
 
 def _find_path_to_dir(basedir, dirname):
-    for dirpath, dirs, files in os.walk(os.path.expanduser(basedir)):
+    for dirpath, dirs, files in os.walk(os.path.expanduser(basedir), followlinks=True):
         if dirname in dirs:
             return os.path.join(dirpath, dirname)
