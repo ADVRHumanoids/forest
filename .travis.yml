@@ -32,6 +32,6 @@ before_script:
 script: 
   - set -e
   - python3 test/test_run_bash_tests.py
-  - python3 -m build
+  - sudo python3 -m build
   - if [ -z $TRAVIS_TAG ] || [ "$(lsb_release -cs)" == "bionic" ]; then echo "Not a tag build, will not upload to pypi"; else twine upload -u __token__ -p $PYPI_TOKEN dist/*; fi
 
