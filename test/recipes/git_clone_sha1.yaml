@@ -1,0 +1,5 @@
+clone:
+  type: git
+  tag: da69af6fe4b8c9101505adbbb4087f926c2edd9d
+  server: github.com
+  repository: advrhumanoids/forest-test.git

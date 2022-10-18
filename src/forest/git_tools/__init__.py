@@ -27,9 +27,12 @@ class GitTools:
             raise ValueError(f'unsupported protocol "{proto}"')
         
         # create command
-        cmd = ['git', 'clone', '--branch', tag]
+        cmd = ['git', 'clone']
         
+        # we're asked to clone a single branch
+        # note: it cannot be a commit sha1
         if single_branch:
+            cmd.extend(['--branch', tag])
             cmd.append('--single-branch')
 
         if recursive:
@@ -44,6 +47,11 @@ class GitTools:
         # (either exception or git returns != 0) 
         try:
             clone_ok = proc_utils.call_process(args=cmd)
+            
+            # checkout to requested branch/tag/commit
+            if tag is not None:
+                clone_ok = clone_ok and self.checkout(tag=tag)
+            
             if not clone_ok:
                 self.rm()
         except BaseException as e:
