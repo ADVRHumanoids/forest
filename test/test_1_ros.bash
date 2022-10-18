@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ -z "$ROS_DISTRO" ]; 
+then echo "ROS is not installed, exiting"; exit 0 
+else echo "ROS $ROS_DISTRO detected"; 
+fi
+
+
 TEST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $TEST_DIR
 
