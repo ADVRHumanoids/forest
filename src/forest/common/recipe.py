@@ -33,7 +33,7 @@ class RecipeSource:
         return f"{self.server}%{self.repository}%{self.tag}"
 
     @classmethod
-    def FromUrl(cls, url: str, tag: str, type='git'):
+    def FromUrl(cls, url: str, tag: str, type='git', force_proto=None):
 
         """
         Parse git server and repository name from url.
@@ -57,6 +57,14 @@ class RecipeSource:
             protocol, server, username, repository = parse_result_https
         else:
             raise ValueError(f'could not parse git repository from given args {url}')
+
+        # default proto from env
+        default_proto = os.getenv('HHCM_FOREST_CLONE_DEFAULT_PROTO')
+        if default_proto is not None:
+            protocol = default_proto
+
+        if force_proto is not None:
+            protocol = force_proto
 
         return cls(server=server,
                    username=username,

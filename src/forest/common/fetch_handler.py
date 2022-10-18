@@ -192,11 +192,16 @@ class GitFetcher(FetchHandler):
         if len(tag_if_parsed) > 1:
             raise RuntimeError(f'[{pkgname}] tag_if conditions must be mutually exclusive')
 
+        # default proto from env
+        default_proto = os.getenv('HHCM_FOREST_CLONE_DEFAULT_PROTO')
+        if default_proto is None:
+            default_proto = 'ssh'
+
         return GitFetcher(pkgname=pkgname, 
                           server=data['server'],
                           repository=data['repository'],
                           tag=tag,
-                          proto=data.get('proto', 'ssh'),
+                          proto=data.get('proto', default_proto),
                           recursive=data.get('recursive', False))
 
 

@@ -85,6 +85,7 @@ def do_main():
     recipes_parser.add_argument('url', help='url of the remote (e.g. git@github.com:<username>/<reponame>.git or https://github.com/<username>/<reponame>.git)')
     recipes_parser.add_argument('--tag', '-t', required=False, default='master')
     recipes_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
+    recipes_parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -139,7 +140,8 @@ def do_main():
 
     # print available packages
     if args.list:
-        print(' '.join(Cookbook.get_available_recipes()))
+        recipes = Cookbook.get_available_recipes()
+        print(' '.join(recipes))
         return True
 
     # set config vars
@@ -167,7 +169,7 @@ def do_main():
     # if required, add a recipe repository to the list of remotes
     if args.command == recipes_cmd:
         print('adding recipes...')
-        recipe_source = RecipeSource.FromUrl(args.url, args.tag)
+        recipe_source = RecipeSource.FromUrl(args.url, args.tag, args.clone_protocol)
         return Cookbook.add_recipes(recipe_source)
 
     # no recipe to install, exit
