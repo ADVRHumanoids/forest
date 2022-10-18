@@ -1,0 +1,8 @@
+clone:
+  type: git
+  tag: with_dep
+  tag_if:
+    mode_a: master
+    mode_b: recipes
+  server: github.com
+  repository: advrhumanoids/forest-test.git
