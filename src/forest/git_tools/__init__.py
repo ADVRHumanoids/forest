@@ -38,7 +38,10 @@ class GitTools:
         if recursive:
             cmd.append('--recursive')
 
+        # note: depth should imply single branch
         if depth is not None:
+            cmd.extend(['--branch', tag])
+            cmd.append('--single-branch')
             cmd.extend(['--depth', depth])
 
         cmd.extend([addr, self.srcdir])
