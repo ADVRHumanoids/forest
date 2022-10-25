@@ -169,7 +169,7 @@ def do_main():
     # if required, add a recipe repository to the list of remotes
     if args.command == recipes_cmd:
         print('adding recipes...')
-        recipe_source = RecipeSource.FromUrl(args.url, args.tag, args.clone_protocol)
+        recipe_source = RecipeSource.FromUrl(args.url, args.tag, force_proto=args.clone_protocol)
         return Cookbook.add_recipes(recipe_source)
 
     # no recipe to install, exit
