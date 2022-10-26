@@ -138,6 +138,9 @@ def uninstall_package(pkg: str,
         return False
 
     builddir = os.path.join(buildroot, pkg.name)
+
+    #TODO: cmake specific, to be moved to CmakeBuilder
+    #-----------------------------------------------------------------
     manifest_fname = os.path.join(builddir, 'install_manifest.txt')
     if not os.path.isfile(manifest_fname):
         pprint(f'missing install_manifest.txt: {manifest_fname}')
@@ -149,11 +152,12 @@ def uninstall_package(pkg: str,
             fname = str(file).rstrip()
             if not _remove_fname(pkg.name, fname, installdir, verbose):
                 error = True
+    #-----------------------------------------------------------------
 
     if not error:
         pprint('uninstalled successfully')
         return True
-
+    
     pprint('errors occurred during uninstallation')
     return False
 

@@ -1,12 +1,14 @@
-import os 
+import os
 from tempfile import TemporaryDirectory
 
 from forest.cmake_tools import CmakeTools
-from forest.common import eval_handler
+from forest.pip_tools import PipTools
+from forest.common import eval_handler, package
 from forest.common import print_utils
 from forest.common.fetch_handler import CustomFetcher
 from forest.common.print_utils import ProgressReporter
 from forest.common import proc_utils
+
 
 class BuildHandler:
 
@@ -14,7 +16,7 @@ class BuildHandler:
     build_cache = set()
 
     def __init__(self, pkgname) -> None:
-        
+
         # pkgname
         self.pkgname = pkgname
 
@@ -28,7 +30,6 @@ class BuildHandler:
         # env hook to install
         self.env_hook_content = None
 
-    
     def pre_build(self, builddir):
         for cmd in self.pre_build_cmd:
             proc_utils.call_process(args=[cmd], cwd=builddir, shell=True)
@@ -36,10 +37,10 @@ class BuildHandler:
     def post_build(self, builddir):
         for cmd in self.post_build_cmd:
             proc_utils.call_process(args=[cmd], cwd=builddir, shell=True)
-    
+
     def install_env_hook(self, installdir):
         if self.env_hook_content is None:
-            return 
+            return
 
         os.makedirs(f'{installdir}/share/forest_env_hook', exist_ok=True)
 
@@ -48,9 +49,9 @@ class BuildHandler:
 
         self.pprint('installed environment hook, re-source your setup.bash')
 
-    def build(self, 
-              srcdir: str, 
-              builddir: str, 
+    def build(self,
+              srcdir: str,
+              builddir: str,
               installdir: str,
               buildtype: str,
               jobs: int,
@@ -66,27 +67,28 @@ class BuildHandler:
             jobs (int): number of parallel jobs to use
             reconfigure (bool, optional): flag indicating if configuration step must be forces (cmake specific). Defaults to False.
         """
-        
+
         if self.pkgname in BuildHandler.build_cache:
-            return True 
+            return True
 
         BuildHandler.build_cache.add(self.pkgname)
         self.pprint('no build action required')
-        return True 
+        return True
 
-    
     @classmethod
     def from_yaml(cls, pkgname, data, recipe):
         buildtype = data['type']
         builder = None
-        
+
         if buildtype == 'cmake':
             builder = CmakeBuilder.from_yaml(pkgname=pkgname, data=data)
         elif buildtype == 'custom':
             builder = CustomBuilder.from_yaml(pkgname=pkgname, data=data)
-        else: 
+        elif buildtype == 'pip':
+            builder = PipBuilder.from_yaml(pkgname=pkgname, data=data)
+        else:
             raise ValueError(f'unsupported build type "{buildtype}"')
-        
+
         # pre and post-build (unconditional)
         pre_build = recipe.get('pre_build', list())
         post_build = recipe.get('post_build', list())
@@ -112,9 +114,9 @@ class BuildHandler:
         for hline in env_hooks:
             env_hook_content += eh.process_string(hline, shell=False)
             env_hook_content += '\n'
-        
-        builder.env_hook_content = env_hook_content if len(env_hooks) > 0 else None
 
+        builder.env_hook_content = env_hook_content if len(
+            env_hooks) > 0 else None
 
         return builder
 
@@ -126,7 +128,7 @@ class CustomBuilder(BuildHandler):
         self.commands = list()
 
     def build(self, srcdir: str, builddir: str, installdir: str, buildtype: str, jobs: int, reconfigure=False) -> bool:
-        
+
         # evaluator
         eh = eval_handler.EvalHandler.instance()
 
@@ -134,7 +136,7 @@ class CustomBuilder(BuildHandler):
         if self.pkgname in BuildHandler.build_cache:
             self.pprint('already built, skipping')
             return True
-        
+
         # create source folder
         if not os.path.exists(srcdir):
             os.mkdir(srcdir)
@@ -142,24 +144,26 @@ class CustomBuilder(BuildHandler):
         self.pprint('building...')
         with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
             for cmd in self.commands:
-                cmd_p = eh.process_string(cmd, {'srcdir': srcdir, 'installdir': installdir, 'jobs': jobs})
+                cmd_p = eh.process_string(
+                    cmd, {'srcdir': srcdir, 'installdir': installdir, 'jobs': jobs})
                 if not proc_utils.call_process([cmd_p], cwd=tmpdir, shell=True, print_on_error=True):
                     self.pprint(f'{cmd_p} failed')
-                    return False 
+                    return False
 
-        # install hooks 
+        # install hooks
         self.install_env_hook(installdir)
 
         # save to cache and exit
         BuildHandler.build_cache.add(self.pkgname)
-        
-        return True 
+
+        return True
 
     @classmethod
     def from_yaml(cls, pkgname, data):
         ret = CustomBuilder(pkgname=pkgname)
         ret.commands = list(data['cmd'])
         return ret
+
 
 class CmakeBuilder(BuildHandler):
 
@@ -169,8 +173,7 @@ class CmakeBuilder(BuildHandler):
         self.cmake_args = cmake_args if cmake_args is not None else list()
         self.cmakelists_folder = cmakelists
         self.target = target
-    
-    
+
     @classmethod
     def from_yaml(cls, pkgname, data):
 
@@ -191,15 +194,14 @@ class CmakeBuilder(BuildHandler):
         # process all args through the shell
         args = map(eh.process_string, args)
 
-        return CmakeBuilder(pkgname=pkgname, 
+        return CmakeBuilder(pkgname=pkgname,
                             cmake_args=args,
                             cmakelists=data.get('cmakelists', '.'),
                             target=data.get('target', 'install'))
 
-
-    def build(self, 
-              srcdir: str, 
-              builddir: str, 
+    def build(self,
+              srcdir: str,
+              builddir: str,
               installdir: str,
               buildtype: str,
               jobs: int,
@@ -212,7 +214,7 @@ class CmakeBuilder(BuildHandler):
 
         # path to folder containing cmakelists
         cmakelists = os.path.join(srcdir, self.cmakelists_folder)
-        
+
         # create build folder if needed
         if not os.path.exists(builddir):
             os.mkdir(builddir)
@@ -226,7 +228,8 @@ class CmakeBuilder(BuildHandler):
             cmake_args = list()
             cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
             cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
-            cmake_args += self.cmake_args  # note: flags from recipes as last entries to allow override
+            # note: flags from recipes as last entries to allow override
+            cmake_args += self.cmake_args
 
             self.pprint('running cmake...')
             if not cmake.configure(args=cmake_args):
@@ -240,16 +243,71 @@ class CmakeBuilder(BuildHandler):
         self.pprint('building...')
         if not cmake.build(target=self.target, jobs=jobs):
             self.pprint('build failed')
-            return False 
+            return False
 
         # post-build
         self.post_build(builddir)
 
-        # install hooks 
+        # install hooks
         self.install_env_hook(installdir)
-        
+
         # save to cache and exit
         BuildHandler.build_cache.add(self.pkgname)
 
         return True
 
+
+class PipBuilder(BuildHandler):
+
+    def __init__(self, pkgname, setup_folder='.', editable=False) -> None:
+        super().__init__(pkgname=pkgname)
+        self.setup_folder = setup_folder
+        self.editable = editable
+
+    @classmethod
+    def from_yaml(cls, pkgname, data):
+
+        # check if we must skip this build,
+        # and return a dummy builder if so
+        eh = eval_handler.EvalHandler.instance()
+        skip_condition = data.get('skip_if', 'False')
+        if eh.eval_condition(skip_condition):
+            return BuildHandler(pkgname=pkgname)
+
+        return PipBuilder(pkgname=pkgname,
+                          setup_folder=data.get('setup', '.'),
+                          editable=data.get('editable', False))
+
+    def build(self, srcdir: str, builddir: str, installdir: str, buildtype: str, jobs: int, reconfigure=False) -> bool:
+
+        # check if package in cache
+        if self.pkgname in BuildHandler.build_cache:
+            self.pprint('already built, skipping')
+            return True
+
+        # path to folder containing setup.py or setup.cfg
+        setup_folder = os.path.join(srcdir, self.setup_folder)
+
+        # create cmake tools
+        pip = PipTools(srcdir=setup_folder,
+                       installdir=installdir)
+
+        # pre-build
+        self.pre_build(builddir)
+
+        # build
+        self.pprint('building...')
+        if not pip.build(editable=self.editable):
+            self.pprint('build failed')
+            return False
+
+        # post-build
+        self.post_build(builddir)
+
+        # install hooks
+        self.install_env_hook(installdir)
+
+        # save to cache and exit
+        BuildHandler.build_cache.add(self.pkgname)
+
+        return True
