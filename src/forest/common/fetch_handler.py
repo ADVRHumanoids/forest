@@ -36,7 +36,7 @@ class FetchHandler:
         self.symlink_dst = None
 
     
-    def fetch(self, srcdir):
+    def fetch(self, srcdir, installdir):
         """
         Fetch the package if srcdir does not exist. Afterwards, carry out
         post-fetch operations according to the recipe.
@@ -52,7 +52,7 @@ class FetchHandler:
             self.pprint(f'source code  already exists, skipping clone')
             return True
 
-        if not self.do_fetch(srcdir):
+        if not self.do_fetch(srcdir, installdir):
             self.pprint(f'clone failed') 
             return False 
 
@@ -69,7 +69,7 @@ class FetchHandler:
         return True
     
     
-    def do_fetch(self, srcdir):
+    def do_fetch(self, srcdir, installdir):
         """
         Carry out the actual fetch operation on the package.
         To be overridden by derived classes.
@@ -104,6 +104,8 @@ class FetchHandler:
             ret = GitFetcher.from_yaml(pkgname=pkgname, data=data)
         elif fetchtype == 'deb':
             ret = DebFetcher.from_yaml(pkgname=pkgname, data=data)
+        elif fetchtype == 'pip':
+            ret = PipFetcher.from_yaml(pkgname=pkgname, data=data)
         elif fetchtype == 'custom':
             ret = CustomFetcher.from_yaml(pkgname=pkgname, data=data)
         else: 
@@ -130,7 +132,7 @@ class CustomFetcher(FetchHandler):
         super().__init__(pkgname)
         self.commands = list()
 
-    def do_fetch(self, srcdir):
+    def do_fetch(self, srcdir, installdir):
         
         # evaluator
         eh = EvalHandler.instance()
@@ -205,7 +207,7 @@ class GitFetcher(FetchHandler):
                           recursive=data.get('recursive', False))
 
 
-    def do_fetch(self, srcdir) -> bool:
+    def do_fetch(self, srcdir, installdir) -> bool:
         
         # custom print shorthand
         pprint = self.pprint
@@ -240,7 +242,7 @@ class DebFetcher(FetchHandler):
         self.debname = debname.format(**os.environ)
 
     
-    def do_fetch(self, srcdir) -> bool:
+    def do_fetch(self, srcdir, installdir) -> bool:
 
         # custom print shorthand
         pprint = self.pprint
@@ -260,3 +262,34 @@ class DebFetcher(FetchHandler):
     def from_yaml(cls, pkgname, data):
         return DebFetcher(pkgname=pkgname, 
                           debname=data['debname'])
+
+
+class PipFetcher(FetchHandler):
+
+    def __init__(self, pkgname, installdir, version=None) -> None:
+        super().__init__(pkgname)
+        self.version = version
+    
+    def do_fetch(self, srcdir, installdir) -> bool:
+
+        # custom print shorthand
+        pprint = self.pprint
+            
+        pprint(f'installing {self.pkgname} from pypi')
+
+        args = ['pip', 'install']
+
+        package_name = self.pkgname
+        if self.version:
+            args.append('-I')   # ingnore installed 
+            package_name = f'{package_name}=={self.version}'
+
+        args += ['--prefix', self.installdir]           
+
+        return proc_utils.call_process(args=['pip', 'install', '--prefix', installdir, package_name])
+
+    
+    @classmethod
+    def from_yaml(cls, pkgname, data):
+        return cls(pkgname=pkgname, 
+                   version=data['version'])

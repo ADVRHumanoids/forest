@@ -1,0 +1,10 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/forest_pip_test.git
+  tag: main
+
+
+build:
+  type: pip
+  editable: True   # default: False

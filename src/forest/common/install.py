@@ -104,7 +104,7 @@ def install_package(pkg: str,
             pprint(f'depends on {dep} -> found')
     
     srcdir = os.path.join(srcroot, pkg.name)
-    if not pkg.fetcher.fetch(srcdir):
+    if not pkg.fetcher.fetch(srcdir, installdir):
         pprint('failed to fetch package')
         return False 
     
