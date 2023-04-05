@@ -35,7 +35,7 @@ def _build(self, target, jobs):
 def _call_cmake(args, cwd='.', print_on_error=True):
 
     args_str = list(map(str, args))
-    return proc_utils.call_process_progress_bar(args=[cmake_command] + args_str,
+    return proc_utils.call_process(args=[cmake_command] + args_str,
                                                 cwd=cwd, 
                                                 print_on_error=print_on_error)
 
