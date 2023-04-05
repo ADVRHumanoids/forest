@@ -1,4 +1,7 @@
 import re
+import progressbar
+from time import sleep
+
 
 def find_make_progress(line):
     regrex_pattern = '\[((?:\s|\d)(?:\s|\d)\d)%\]'
@@ -6,6 +9,18 @@ def find_make_progress(line):
     if match is not None:
         progress = int(match.groups()[0])
         return progress
+
+
+def print_make_progress(line):
+    progress = find_make_progress(line)
+    if progress is not None:
+        print(progress)
+
+def update_progess_bar(line, pbar):   
+    progress = find_make_progress(line)
+    if progress is not None:
+        pbar.update(progress)
+
 
 if __name__ == '__main__':
     example = """
@@ -49,8 +64,10 @@ Scanning dependencies of target cartesio_rt
 [100%] Linking CXX shared library libxbotctrl_cartesio_rt.so
 [100%] Built target cartesio_rt
 """
-
+    pbar = progressbar.ProgressBar(maxval=100, \
+    widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+    pbar.start()
     for line in example.splitlines():
-        progress = find_make_progress(line)
-        if progress is not None:
-            print(progress)
+        sleep(0.1)
+        update_progess_bar(line, pbar=pbar)
+    pbar.finish()

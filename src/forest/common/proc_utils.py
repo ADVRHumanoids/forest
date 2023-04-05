@@ -3,93 +3,25 @@ import sys
 import getpass
 import re
 import typing
+import progressbar
 
 from forest.common import print_utils
+from forest.common.parser import update_progess_bar
 
 call_process_verbose = False
 
-def call_process(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False) -> bool:
 
+def call_process(args: typing.List[str] = None, 
+                 cwd='.', 
+                 input=None,
+                 verbose=False,
+                 print_on_error=True, 
+                 shell: bool=False,
+                 timeout=None,
+                 ) -> bool:    
+    
     # convert args to string
-    args = list(map(str, args))
-
-    if verbose or call_process_verbose:
-        if shell:
-            print(f'calling shell with command "{args}"')
-        else:
-            print('calling "{}"'.format(' '.join(args)))
-
-    executable = '/bin/bash' if shell else None
-
-    if call_process_verbose or verbose:
-        # run will print output to terminal
-        proc = subprocess.run(args=args, 
-                        cwd=cwd, 
-                        input=input, 
-                        shell=shell, 
-                        executable=executable)
-
-        print(f'returned {proc.returncode}')
-
-        return proc.returncode == 0 
-
-    try:
-        # run with output/error redirection and exit status check
-        pr = subprocess.run(args=args, 
-                        stdout=subprocess.PIPE, 
-                        stderr=subprocess.STDOUT, 
-                        cwd=cwd, 
-                        input=input, 
-                        shell=shell, 
-                        executable=executable)
-
-        print_utils.log_file.write(pr.stdout.decode())
-
-    except subprocess.CalledProcessError as e:
-        # on error, print output (includes stderr)
-        print_utils.log_file.write(e.output.decode())
-
-        if print_on_error and not verbose:
-            print(e.output.decode(), file=sys.stderr)
-            
-        return False
-
-    return True
-
-
-def get_output(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False):
-
-    if verbose or call_process_verbose:
-        if shell:
-            print(f'calling shell with command "{args}"')
-        else:
-            print('calling "{}"'.format(' '.join(args)))
-
-    try:
-        # check_output will not print
-        out = subprocess.check_output(args=args, cwd=cwd, input=input, shell=shell)
-        ret = out.decode().strip()
-        if verbose or call_process_verbose:
-            print('calling "{}" returned "{}"'.format(' '.join(args), ret))
-        return ret
-    except subprocess.CalledProcessError as e:
-        # on error, print output and errors
-        if print_on_error:
-            print('stdout: ' + e.output.decode(), file=sys.stderr)
-            print('stderr: ' + e.stderr.decode(), file=sys.stderr)
-        return None
-
-
-def call_process_stdout_readline_cb(args: typing.List[str] = None, 
-                                    callable: typing.Callable[[str], None]=None, 
-                                    cwd='.', 
-                                    shell: bool=False,
-                                    timeout=None,
-                                    verbose=False) -> bool:    
-    # convert args to string
-    # args = list(map(str, args))    
-    if args is None:
-        args = []
+    args = list(map(str, args))    
     
     if verbose or call_process_verbose:
         if shell:
@@ -117,21 +49,60 @@ def call_process_stdout_readline_cb(args: typing.List[str] = None,
 
         return proc.returncode == 0 
 
-    proc = subprocess.Popen(args=popen_args,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, 
-                            cwd=cwd, 
-                            shell=shell, 
-                            executable=executable,
-                            text=True)
-    
-    while True:
-        line = proc.stdout.readline()
 
-        if not line:
-            break
+    try:
+        pr = subprocess.Popen(args=popen_args,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, 
+                                cwd=cwd, 
+                                shell=shell, 
+                                executable=executable,
+                                text=True)
         
-        if callable is not None:
-            callable(line)
-        
-    return proc.wait(timeout=timeout) == 0
+        pbar = progressbar.ProgressBar(maxval=100, \
+        widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+        pbar.start()
+        while True:
+            line = pr.stdout.readline()
+
+            if not line:
+                pbar.finish()
+                break
+                
+
+            update_progess_bar(line, pbar=pbar)
+            
+        return pr.wait(timeout=timeout) == 0
+    
+    #todo: fix subprocess.CalledProcessError not working with subprocess.Popen
+    except subprocess.CalledProcessError as e:
+        # on error, print output (includes stderr)
+        print_utils.log_file.write(e.output.decode())
+
+        if print_on_error and not verbose:
+            print(e.output.decode(), file=sys.stderr)
+            
+        return False
+
+
+def get_output(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False):
+
+    if verbose or call_process_verbose:
+        if shell:
+            print(f'calling shell with command "{args}"')
+        else:
+            print('calling "{}"'.format(' '.join(args)))
+
+    try:
+        # check_output will not print
+        out = subprocess.check_output(args=args, cwd=cwd, input=input, shell=shell)
+        ret = out.decode().strip()
+        if verbose or call_process_verbose:
+            print('calling "{}" returned "{}"'.format(' '.join(args), ret))
+        return ret
+    except subprocess.CalledProcessError as e:
+        # on error, print output and errors
+        if print_on_error:
+            print('stdout: ' + e.output.decode(), file=sys.stderr)
+            print('stderr: ' + e.stderr.decode(), file=sys.stderr)
+        return None
