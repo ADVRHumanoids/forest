@@ -53,7 +53,7 @@ def call_process(args: typing.List[str] = None,
     try:
         pr = subprocess.Popen(args=popen_args,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, 
+                                stderr=subprocess.PIPE, 
                                 cwd=cwd, 
                                 shell=shell, 
                                 executable=executable,
@@ -72,7 +72,12 @@ def call_process(args: typing.List[str] = None,
 
             update_progess_bar(line, pbar=pbar)
             
-        return pr.wait(timeout=timeout) == 0
+        if pr.wait(timeout=timeout) != 0:
+            print(pr.stderr.read(), file=sys.stderr)
+            return False
+        
+        return True
+
     
     #todo: fix subprocess.CalledProcessError not working with subprocess.Popen
     except subprocess.CalledProcessError as e:
