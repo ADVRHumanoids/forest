@@ -51,13 +51,15 @@ def call_process(args: typing.List[str] = None,
 
 
     try:
+        #  # universal_newlines=True equivalent to text=True (backward compatibility)
+        #  see https://docs.python.org/3/library/subprocess.html#subprocess.Popen:~:text=Used%20Arguments.-,The%20universal_newlines%20argument%20is%20equivalent%20to%20text%20and%20is%20provided%20for%20backwards%20compatibility.%20By%20default%2C%20file%20objects%20are%20opened%20in%20binary%20mode.,-New%20in%20version
         pr = subprocess.Popen(args=popen_args,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, 
                                 cwd=cwd, 
                                 shell=shell, 
                                 executable=executable,
-                                text=True)
+                                universal_newlines=True)
         
         pbar = progressbar.ProgressBar(maxval=100, \
         widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
