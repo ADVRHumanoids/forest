@@ -75,7 +75,8 @@ def call_process(args: typing.List[str] = None,
             update_progess_bar(line, pbar=pbar)
             
         if pr.wait(timeout=timeout) != 0:
-            print(pr.stderr.read(), file=sys.stderr)
+            if print_on_error:
+                print(pr.stderr.read(), file=sys.stderr)
             return False
         
         return True
