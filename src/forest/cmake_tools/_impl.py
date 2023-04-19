@@ -2,6 +2,7 @@ from tempfile import TemporaryDirectory
 import os 
 
 from forest.common import proc_utils
+from forest.common.parser import update_progess_bar
 
 cmake_command = 'cmake'
 default_args = list()
@@ -34,7 +35,9 @@ def _build(self, target, jobs):
 def _call_cmake(args, cwd='.', print_on_error=True):
 
     args_str = list(map(str, args))
-    return proc_utils.call_process(args=[cmake_command] + args_str, cwd=cwd, print_on_error=print_on_error)
+    return proc_utils.call_process(args=[cmake_command] + args_str,
+                                                cwd=cwd, 
+                                                print_on_error=print_on_error)
 
 
 def _find_package(pkg_name: str):
