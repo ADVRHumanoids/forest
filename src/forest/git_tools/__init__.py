@@ -1,6 +1,7 @@
 import typing
 
 from forest.common import proc_utils
+from forest.common.parser import git_regrex_pattern
 import shutil
 
 
@@ -27,7 +28,10 @@ class GitTools:
             raise ValueError(f'unsupported protocol "{proto}"')
         
         # create command
-        cmd = ['git', 'clone']
+        # --progress flag forces progress status even if the standard 
+        # error stream is not directed to a terminal.
+
+        cmd = ['git', 'clone', '--progress']
         
         # we're asked to clone a single branch
         # note: it cannot be a commit sha1
@@ -49,7 +53,10 @@ class GitTools:
         # clone, and delete the source folder on failure
         # (either exception or git returns != 0) 
         try:
-            clone_ok = proc_utils.call_process(args=cmd)
+            # Progress status is reported on the standard error stream
+            clone_ok = proc_utils.call_process(args=cmd, 
+                                               update_regrex_pattern=git_regrex_pattern,
+                                               stderr_to_stdout=True)
             
             # checkout to requested branch/tag/commit
             if tag is not None:
