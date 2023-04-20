@@ -6,7 +6,7 @@ import typing
 import progressbar
 
 from forest.common import print_utils
-from forest.common.parser import update_progess_bar
+from forest.common.parser import update_progress_bar
 
 call_process_verbose = False
 
@@ -18,6 +18,8 @@ def call_process(args: typing.List[str] = None,
                  print_on_error=True, 
                  shell: bool=False,
                  timeout=None,
+                 update_regrex_pattern=None,
+                 stderr_to_stdout=False
                  ) -> bool:    
     
     # convert args to string
@@ -47,41 +49,30 @@ def call_process(args: typing.List[str] = None,
 
         print(f'returned {proc.returncode}')
 
-        return proc.returncode == 0 
-
+        return proc.returncode == 0         
 
     try:
         #  # universal_newlines=True equivalent to text=True (backward compatibility)
         #  see https://docs.python.org/3/library/subprocess.html#subprocess.Popen:~:text=Used%20Arguments.-,The%20universal_newlines%20argument%20is%20equivalent%20to%20text%20and%20is%20provided%20for%20backwards%20compatibility.%20By%20default%2C%20file%20objects%20are%20opened%20in%20binary%20mode.,-New%20in%20version
+        stderr = subprocess.STDOUT if stderr_to_stdout else subprocess.PIPE
         pr = subprocess.Popen(args=popen_args,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, 
+                                stderr=stderr, 
                                 cwd=cwd, 
                                 shell=shell, 
                                 executable=executable,
                                 universal_newlines=True)
         
-        pbar = progressbar.ProgressBar(maxval=100, \
-        widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
-        pbar.start()
-        while True:
-            line = pr.stdout.readline()
-
-            if not line:
-                pbar.finish()
-                break
-                
-
-            update_progess_bar(line, pbar=pbar)
+        if update_regrex_pattern is not None:
+            _progress_bar(pr, update_regrex_pattern)
             
         if pr.wait(timeout=timeout) != 0:
             if print_on_error:
-                print(pr.stderr.read(), file=sys.stderr)
+                print(pr.stderr.read(), file=sys.stderr)  
             return False
         
         return True
 
-    
     #todo: fix subprocess.CalledProcessError not working with subprocess.Popen
     except subprocess.CalledProcessError as e:
         # on error, print output (includes stderr)
@@ -92,6 +83,26 @@ def call_process(args: typing.List[str] = None,
             
         return False
 
+def _progress_bar(process, regrex_pattern):
+    pbar = progressbar.ProgressBar(maxval=100, \
+    widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+    pbar.start()
+    
+    while True:
+        line = process.stdout.readline()
+
+        if not line:
+            pbar.finish()
+            break
+            
+        update_progress_bar(line, pbar=pbar, regrex_pattern=regrex_pattern)
+
+def _no_progress_bar(process):
+    while True:
+            line = process.stdout.readline()
+
+            if not line:
+                break
 
 def get_output(args, cwd='.', input=None, verbose=False, print_on_error=True, shell=False):
 

@@ -1,29 +1,28 @@
 import re
 import progressbar
 from time import sleep
+import typing
 
 
-def find_make_progress(line):
-    regrex_pattern = '\[((?:\s|\d)(?:\s|\d)\d)%\]'
+make_regrex_pattern = '\[((?:\s|\d)(?:\s|\d)\d)%\]'
+git_regrex_pattern = 'Receiving objects: ((?:\s|\d)(?:\s|\d)\d)% \('
+
+
+def find_progress(line: str, regrex_pattern) -> float:
     match = re.search(regrex_pattern, line)
     if match is not None:
-        progress = int(match.groups()[0])
+        progress = float(match.groups()[0])
         return progress
+    
 
-
-def print_make_progress(line):
-    progress = find_make_progress(line)
-    if progress is not None:
-        print(progress)
-
-def update_progess_bar(line, pbar):   
-    progress = find_make_progress(line)
+def update_progress_bar(line, pbar, regrex_pattern):   
+    progress = find_progress(line, regrex_pattern)
     if progress is not None:
         pbar.update(progress)
 
 
 if __name__ == '__main__':
-    example = """
+    make_example = """
 Scanning dependencies of target client
 Scanning dependencies of target talker
 Scanning dependencies of target listener
@@ -67,7 +66,31 @@ Scanning dependencies of target cartesio_rt
     pbar = progressbar.ProgressBar(maxval=100, \
     widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
     pbar.start()
-    for line in example.splitlines():
+    for line in make_example.splitlines():
         sleep(0.1)
-        update_progess_bar(line, pbar=pbar)
+        update_progress_bar(line, pbar=pbar, regrex_pattern=make_regrex_pattern)
+    pbar.finish()
+
+
+    git_example = """
+Cloning into '/home/mruzzon/alberobotics/sps_forest/src/ReflexxesTypeII'...
+remote: Enumerating objects: 279, done.
+remote: Counting objects: 100% (6/6), done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 279 (delta 2), reused 6 (delta 2), pack-reused 273
+Receiving objects:  50% (279/279), 3.35 MiB | 4.62 MiB/s, done.
+Resolving deltas: 100% (109/109), done.
+returned 0
+calling "git checkout master"
+Already on 'master'
+Your branch is up to date with 'origin/master'.
+returned 0
+"""
+
+    pbar = progressbar.ProgressBar(maxval=100, \
+    widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+    pbar.start()
+    for line in git_example.splitlines():
+        sleep(0.1)
+        update_progress_bar(line, pbar=pbar, regrex_pattern=git_regrex_pattern)
     pbar.finish()
