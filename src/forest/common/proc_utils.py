@@ -60,6 +60,7 @@ def call_process(args: typing.List[str] = None,
                                 executable=executable,
                                 universal_newlines=True)
         
+        lines = []
         if update_regrex_pattern is not None:
             lines = _progress_bar(pr, update_regrex_pattern)
             
