@@ -73,8 +73,6 @@ def call_process(args: typing.List[str] = None,
             if print_on_error and not verbose:
                 print_utils.log_file.seek(0)  # go to the beginning of the file
                 print(print_utils.log_file.read(), file=sys.stderr)
-            
-            print(f'errors occurred, see log file {print_utils.log_file.name}')
 
             return False
         
