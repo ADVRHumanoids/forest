@@ -64,14 +64,16 @@ def call_process(args: typing.List[str] = None,
             lines = _progress_bar(pr, update_regrex_pattern)
             
         if pr.wait(timeout=timeout) != 0:
-            logfile_path = os.path.join(rootdir, 'logfile.txt')
-            print(f'errors occurred, see log file {logfile_path}')
-
-            with open(logfile_path, 'w') as logfile_object:
-                if lines:
-                    logfile_object.writelines(lines)
-                else:
-                    logfile_object.write(pr.stdout.read())
+            if lines:
+                print_utils.log_file.writelines(lines)
+            else:
+                print_utils.log_file.write(pr.stdout.read())
+            
+            if print_on_error and not verbose:
+                print_utils.log_file.seek(0)  # go to the beginning of the file
+                print(print_utils.log_file.read(), file=sys.stderr)
+            
+            print(f'errors occurred, see log file {print_utils.log_file.name}')
 
             return False
         
