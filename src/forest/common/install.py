@@ -154,7 +154,6 @@ def uninstall_package(pkg: str,
         pprint('uninstalled successfully')
         return True
 
-    pprint('errors occurred during uninstallation')
     return False
 
 

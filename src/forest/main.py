@@ -132,7 +132,7 @@ def do_main():
 
     if not args.verbose:
         from forest.common import print_utils
-        print_utils.log_file = open(args.log_file, 'w')
+        print_utils.log_file = open(args.log_file, 'w+')
 
     # sudo handling 
     if args.command == grow_cmd and args.pwd is not None:

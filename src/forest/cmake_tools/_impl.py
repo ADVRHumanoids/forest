@@ -31,16 +31,17 @@ def _configure(self, args):
 
 def _build(self, target, jobs):
 
-    return _call_cmake(['--build', self.builddir, '--target', target, '--', '-j', jobs])
+    return _call_cmake(['--build', self.builddir, '--target', target, '--', '-j', jobs], print_progress=True)
 
 
-def _call_cmake(args, cwd='.', print_on_error=True):
+def _call_cmake(args, cwd='.', print_on_error=True, print_progress=False):
 
     args_str = list(map(str, args))
+    update_regrex_pattern = make_regrex_pattern if print_progress else None
     return proc_utils.call_process(args=[cmake_command] + args_str,
                                    cwd=cwd, 
                                    print_on_error=print_on_error,
-                                   update_regrex_pattern=make_regrex_pattern)
+                                   update_regrex_pattern=update_regrex_pattern)
 
 
 def _find_package(pkg_name: str):

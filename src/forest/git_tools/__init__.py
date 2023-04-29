@@ -55,8 +55,7 @@ class GitTools:
         try:
             # Progress status is reported on the standard error stream
             clone_ok = proc_utils.call_process(args=cmd, 
-                                               update_regrex_pattern=git_regrex_pattern,
-                                               stderr_to_stdout=True)
+                                               update_regrex_pattern=git_regrex_pattern)
             
             # checkout to requested branch/tag/commit
             if tag is not None:
