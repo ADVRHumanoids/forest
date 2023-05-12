@@ -29,12 +29,32 @@ class BuildHandler:
         self.env_hook_content = None
 
     
-    def pre_build(self, builddir):
-        for cmd in self.pre_build_cmd:
+    def pre_build(self, builddir, srcdir, installdir):
+        eh = eval_handler.EvalHandler.instance()
+        process_string = lambda cmd: eh.process_string(cmd, {'builddir':builddir, 
+                                                             'srcdir': srcdir, 
+                                                             'installdir': installdir})
+        
+        _pre_build_cmd = map(process_string, self.pre_build_cmd)
+        
+        # apply locals to all cmds before executing the first one
+        pre_build_cmd = list(_pre_build_cmd)
+
+        for cmd in pre_build_cmd:
             proc_utils.call_process(args=[cmd], cwd=builddir, shell=True)
 
-    def post_build(self, builddir):
-        for cmd in self.post_build_cmd:
+    def post_build(self, builddir, srcdir, installdir):
+        eh = eval_handler.EvalHandler.instance()
+        process_string = lambda cmd: eh.process_string(cmd, {'builddir':builddir, 
+                                                             'srcdir': srcdir, 
+                                                             'installdir': installdir})
+        
+        _post_build_cmd = map(process_string, self.post_build_cmd)
+        
+        # apply locals to all cmds before executing the first one
+        post_build_cmd = list(_post_build_cmd)
+
+        for cmd in post_build_cmd:
             proc_utils.call_process(args=[cmd], cwd=builddir, shell=True)
     
     def install_env_hook(self, installdir):
@@ -96,15 +116,12 @@ class BuildHandler:
 
         pre_build_if = recipe.get('pre_build_if', dict())
         pre_build.extend(eh.parse_conditional_dict(pre_build_if))
-        pre_build = map(eh.process_string, pre_build)
 
         post_build_if = recipe.get('post_build_if', dict())
         post_build.extend(eh.parse_conditional_dict(post_build_if))
-        post_build = map(eh.process_string, post_build)
 
-        # apply
-        builder.pre_build_cmd = list(pre_build)
-        builder.post_build_cmd = list(post_build)
+        builder.pre_build_cmd = pre_build
+        builder.post_build_cmd = post_build
 
         # env hooks
         env_hooks = data.get('env_hooks', list())
@@ -234,7 +251,7 @@ class CmakeBuilder(BuildHandler):
                 return False
 
         # pre-build
-        self.pre_build(builddir)
+        self.pre_build(builddir, srcdir, installdir)
 
         # build
         self.pprint('building...')
@@ -243,7 +260,7 @@ class CmakeBuilder(BuildHandler):
             return False 
 
         # post-build
-        self.post_build(builddir)
+        self.post_build(builddir, srcdir, installdir)
 
         # install hooks 
         self.install_env_hook(installdir)
