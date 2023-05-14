@@ -224,6 +224,14 @@ def write_setup_file():
     Write a setup file to the root directory.
     """
 
+    # compute relative site-package path 
+    # without using distutils, which is deprecated
+    import sys 
+    import sysconfig
+    platlib_path = sysconfig.get_path(name='platlib')    
+    platlib_relpath = os.path.relpath(path=platlib_path, start=sys.prefix)
+
+    # replace placeholders
     this_dir = os.path.dirname(os.path.abspath(__file__))
     setup_template = os.path.join(this_dir, 'setup.bash')
     with open(setup_template, 'r') as f:
@@ -231,6 +239,7 @@ def write_setup_file():
         content = content.replace('£PREFIX£', os.path.realpath(installdir))
         content = content.replace('£SRCDIR£', os.path.realpath(srcroot))
         content = content.replace('£ROOTDIR£', os.path.realpath(rootdir))
+        content = content.replace('£REL_SITE_PKG_PATH£', platlib_relpath)
     
     setup_file = os.path.join(installdir, '..', 'setup.bash')
     if not os.path.exists(setup_file):
