@@ -41,6 +41,8 @@ class GitTools:
 
         if recursive:
             cmd.append('--recursive')
+            if tag is not None:
+                cmd.extend(['--branch', tag])
 
         # note: depth should imply single branch
         if depth is not None:
@@ -71,7 +73,12 @@ class GitTools:
         return clone_ok
 
     def checkout(self, tag):
+        # note: does not discover or initialize any new submodules that may be present in the branch being checked out.
         return proc_utils.call_process(['git', 'checkout', '--recurse-submodules', tag], cwd=self.srcdir)
+    
+    def discover_and_init_submodules(self):
+        return proc_utils.call_process(['git', 'submodule', 'sync', '--recursive', '&&',
+                                        'git', 'submodule', 'update', '--init', '--recursive'], cwd=self.srcdir)
 
     def rm(self):
         shutil.rmtree(self.srcdir,  ignore_errors=True)
