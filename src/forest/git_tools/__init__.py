@@ -41,9 +41,7 @@ class GitTools:
 
         if recursive:
             cmd.append('--recursive')
-            if tag is not None:
-                cmd.extend(['--branch', tag])
-
+        
         # note: depth should imply single branch
         if depth is not None:
             cmd.extend(['--branch', tag])
@@ -61,7 +59,7 @@ class GitTools:
             
             # checkout to requested branch/tag/commit
             if tag is not None:
-                clone_ok = clone_ok and self.checkout(tag=tag)
+                clone_ok = clone_ok and self.checkout(tag=tag, recursive=recursive)
             
             if not clone_ok:
                 self.rm()
@@ -72,11 +70,16 @@ class GitTools:
 
         return clone_ok
 
-    def checkout(self, tag):
+    def checkout(self, tag, recursive):
         # note: does not discover or initialize any new submodules that may be present in the branch being checked out.
-        return proc_utils.call_process(['git', 'checkout', '--recurse-submodules', tag], cwd=self.srcdir)
+        ret_recursive = True
+        ret_checkout = proc_utils.call_process(['git', 'checkout', '--recurse-submodules', tag], cwd=self.srcdir)
+        if recursive:
+            ret_recursive = _discover_and_init_submodules()
+        
+        return ret_checkout and ret_recursive
     
-    def discover_and_init_submodules(self):
+    def _discover_and_init_submodules(self):
         return proc_utils.call_process(['git', 'submodule', 'sync', '--recursive', '&&',
                                         'git', 'submodule', 'update', '--init', '--recursive'], cwd=self.srcdir)
 
