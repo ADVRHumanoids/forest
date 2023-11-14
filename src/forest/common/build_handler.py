@@ -205,8 +205,7 @@ class CmakeBuilder(BuildHandler):
         # parse conditional cmake arguments
         args.extend(eh.parse_conditional_dict(args_if))
 
-        # process all args through the shell
-        args = map(eh.process_string, args)
+        
 
         return CmakeBuilder(pkgname=pkgname, 
                             cmake_args=args,
@@ -239,11 +238,19 @@ class CmakeBuilder(BuildHandler):
 
         # configure
         if not cmake.is_configured() or reconfigure:
+
+            # parse additional cmake args through the shell
+            # process all args through the shell
+            eh = eval_handler.EvalHandler.instance()
+            user_cmake_args = []
+            for arg in self.cmake_args:
+                user_cmake_args.append(eh.process_string(arg, {'srcdir': srcdir, 'installdir': installdir, 'jobs': jobs}))
+
             # set install prefix and build type (only on first or forced configuration)
             cmake_args = list()
             cmake_args.append(f'-DCMAKE_INSTALL_PREFIX={installdir}')
             cmake_args.append(f'-DCMAKE_BUILD_TYPE={buildtype}')
-            cmake_args += self.cmake_args  # note: flags from recipes as last entries to allow override
+            cmake_args += user_cmake_args  # note: flags from recipes as last entries to allow override
 
             self.pprint('running cmake...')
             if not cmake.configure(args=cmake_args):

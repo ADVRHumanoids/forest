@@ -6,6 +6,8 @@ clone:
 
 build:
   type: cmake
+  args: 
+    - -DMYINSTALLDIR={installdir}
   args_if:
     opt_b:
       - -DINSTALL_B_FILE=ON
