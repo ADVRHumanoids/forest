@@ -137,20 +137,22 @@ def uninstall_package(pkg: str,
         pprint(f'recipe file not found (searched in {Cookbook.get_recipe_basedir()})')
         return False
 
-    builddir = os.path.join(buildroot, pkg.name)
-    manifest_fname = os.path.join(builddir, 'install_manifest.txt')
-    if not os.path.isfile(manifest_fname):
-        pprint(f'missing install_manifest.txt: {manifest_fname}')
+    install_cache_fname = os.path.join(installdir, ".install_cache", pkg.name)
+    if not os.path.isfile(install_cache_fname):
+        pprint(f"missing information: {install_cache_fname}\nare you sure the recipe '{pkg.name}' is installed?")
         return False
 
     error = False
-    with open(manifest_fname, 'r') as manifest:
-        for file in manifest.readlines():
+    with open(install_cache_fname, 'r') as install_cache:
+        for file in install_cache.readlines():
             fname = str(file).rstrip()
             if not _remove_fname(pkg.name, fname, installdir, verbose):
                 error = True
 
     if not error:
+        cmd = ['rm', install_cache_fname]
+        ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+        
         pprint('uninstalled successfully')
         return True
 
@@ -166,43 +168,32 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
         return True
 
     if not os.path.islink(fname) and not os.path.exists(fname):
-        pprint(f'removing:  {fname} --> no such file or directory')
+        if verbose:
+            pprint(f'removing:  {fname} --> no such file or directory')
         fname = os.path.split(fname)[0]
         return _remove_fname(pkg, fname, installdir, verbose)
 
     elif not os.path.isdir(fname) or len(os.listdir(fname)) == 0:
-        pprint(f'removing:  {fname}', end="")
+        if verbose:
+            pprint(f'removing:  {fname}', end="")
         cmd = ['rm', '-r', fname]
         ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
         if ok:
-            print(' --> done')
+            if verbose:
+                print(' --> done')
             fname = os.path.split(fname)[0]
             return _remove_fname(pkg, fname, installdir, verbose)
 
         else:
-            print(' --> error removing file or directory')
+            if verbose:
+                print(' --> error removing file or directory')
             return False
 
     return True
 
 
 def clean(pkg: str, buildroot: str,  installdir: str, verbose: bool):
-    pprint = ProgressReporter.get_print_fn(pkg)
-    pprint(f'cleaning..')
-    if not uninstall_package(pkg=pkg, buildroot=buildroot, installdir=installdir, verbose=verbose):
-        pprint('uninstall failed')
-
-        while True:
-            remove_build = input('Do you want to remove build dir anyway? yes or no\n')
-            if remove_build in ('y', 'yes'):
-                return _remove_buildir(pkg, verbose)
-
-            elif remove_build in ('no', 'n'):
-                return True
-
-            else:
-                print('INVALID INPUT: valid options are {yes, y, no, n}\n')
-
+    pprint = ProgressReporter.get_print_fn(pkg)      
     return _remove_buildir(pkg, verbose)
 
 
