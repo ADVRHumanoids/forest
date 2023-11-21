@@ -139,7 +139,7 @@ def uninstall_package(pkg: str,
 
     install_cache_fname = os.path.join(installdir, ".install_cache", pkg.name)
     if not os.path.isfile(install_cache_fname):
-        pprint(f'missing install_cache file: {install_cache_fname}')
+        pprint(f"missing information: {install_cache_fname}\nare you sure the recipe '{pkg.name}' is installed?")
         return False
 
     error = False
@@ -150,6 +150,9 @@ def uninstall_package(pkg: str,
                 error = True
 
     if not error:
+        cmd = ['rm', install_cache_fname]
+        ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
+        
         pprint('uninstalled successfully')
         return True
 
@@ -165,29 +168,32 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
         return True
 
     if not os.path.islink(fname) and not os.path.exists(fname):
-        pprint(f'removing:  {fname} --> no such file or directory')
+        if verbose:
+            pprint(f'removing:  {fname} --> no such file or directory')
         fname = os.path.split(fname)[0]
         return _remove_fname(pkg, fname, installdir, verbose)
 
     elif not os.path.isdir(fname) or len(os.listdir(fname)) == 0:
-        pprint(f'removing:  {fname}', end="")
+        if verbose:
+            pprint(f'removing:  {fname}', end="")
         cmd = ['rm', '-r', fname]
         ok = proc_utils.call_process(args=cmd, print_on_error=verbose)
         if ok:
-            print(' --> done')
+            if verbose:
+                print(' --> done')
             fname = os.path.split(fname)[0]
             return _remove_fname(pkg, fname, installdir, verbose)
 
         else:
-            print(' --> error removing file or directory')
+            if verbose:
+                print(' --> error removing file or directory')
             return False
 
     return True
 
 
 def clean(pkg: str, buildroot: str,  installdir: str, verbose: bool):
-    pprint = ProgressReporter.get_print_fn(pkg)
-    pprint(f'removing builddir..')        
+    pprint = ProgressReporter.get_print_fn(pkg)      
     return _remove_buildir(pkg, verbose)
 
 
