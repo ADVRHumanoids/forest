@@ -1,4 +1,6 @@
 import os 
+import yaml
+
 from tempfile import TemporaryDirectory
 
 from forest.cmake_tools import CmakeTools
@@ -274,6 +276,16 @@ class CmakeBuilder(BuildHandler):
         
         # save to cache and exit
         BuildHandler.build_cache.add(self.pkgname)
+        
+        self._cache_install_info(self.pkgname, builddir, installdir)
 
         return True
+    
+    def _cache_install_info(self, pkgname, builddir, installdir):        
+        manifest_fname = os.path.join(builddir, 'install_manifest.txt')
+        if not os.path.isfile(manifest_fname):
+            self.pprint(f'missing install_manifest.txt: {manifest_fname}')
 
+        install_cache_fname = os.path.join(installdir, ".install_cache", pkgname)
+        with open(manifest_fname, 'r') as manifest, open(install_cache_fname, "a+") as install_cache: 
+            install_cache.write(manifest.read())

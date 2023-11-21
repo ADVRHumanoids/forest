@@ -137,15 +137,14 @@ def uninstall_package(pkg: str,
         pprint(f'recipe file not found (searched in {Cookbook.get_recipe_basedir()})')
         return False
 
-    builddir = os.path.join(buildroot, pkg.name)
-    manifest_fname = os.path.join(builddir, 'install_manifest.txt')
-    if not os.path.isfile(manifest_fname):
-        pprint(f'missing install_manifest.txt: {manifest_fname}')
+    install_cache_fname = os.path.join(installdir, ".install_cache", pkg.name)
+    if not os.path.isfile(install_cache_fname):
+        pprint(f'missing install_cache file: {install_cache_fname}')
         return False
 
     error = False
-    with open(manifest_fname, 'r') as manifest:
-        for file in manifest.readlines():
+    with open(install_cache_fname, 'r') as install_cache:
+        for file in install_cache.readlines():
             fname = str(file).rstrip()
             if not _remove_fname(pkg.name, fname, installdir, verbose):
                 error = True
@@ -188,21 +187,7 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
 
 def clean(pkg: str, buildroot: str,  installdir: str, verbose: bool):
     pprint = ProgressReporter.get_print_fn(pkg)
-    pprint(f'cleaning..')
-    if not uninstall_package(pkg=pkg, buildroot=buildroot, installdir=installdir, verbose=verbose):
-        pprint('uninstall failed')
-
-        while True:
-            remove_build = input('Do you want to remove build dir anyway? yes or no\n')
-            if remove_build in ('y', 'yes'):
-                return _remove_buildir(pkg, verbose)
-
-            elif remove_build in ('no', 'n'):
-                return True
-
-            else:
-                print('INVALID INPUT: valid options are {yes, y, no, n}\n')
-
+    pprint(f'removing builddir..')        
     return _remove_buildir(pkg, verbose)
 
 

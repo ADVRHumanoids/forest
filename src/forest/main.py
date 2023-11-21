@@ -75,11 +75,14 @@ def do_main():
     grow_parser.add_argument('--clone-depth', required=False, type=int, help='set maximum history depth to save bandwidth')
     grow_parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
     grow_parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
-    grow_parser.add_argument('--uninstall', required=False, action='store_true', help='uninstall recipe')
-    grow_parser.add_argument('--clean', required=False, action='store_true', help='uninstall recipe and remove build')
+    grow_parser.add_argument('--clean', required=False, action='store_true', help='remove pkg build folder before grow')
     grow_parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required (if empty, user is prompted for password); note: to be used with care, as exposing your password might be harmful!')
     grow_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
 
+    cut_cmd = 'cut'
+    cut_parser = subparsers.add_parser(cut_cmd, help='remove build and install')
+    cut_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
+    
     recipes_cmd = 'add-recipes'
     recipes_parser = subparsers.add_parser(recipes_cmd, help='add recipes from git remote')
     recipes_parser.add_argument('url', help='url of the remote (e.g. git@github.com:<username>/<reponame>.git or https://github.com/<username>/<reponame>.git)')
@@ -186,10 +189,10 @@ def do_main():
 
     # clean functionality
     if args.command == grow_cmd and args.clean:
-        return clean(pkg=args.recipe,
-                     buildroot=buildroot,
-                     installdir=installdir,
-                     verbose=args.verbose)
+        clean(pkg=args.recipe,
+              buildroot=buildroot,
+              installdir=installdir,
+              verbose=args.verbose)
 
     # handle modes
     if args.command == grow_cmd and args.mode is not None:
