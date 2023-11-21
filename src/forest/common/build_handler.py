@@ -286,6 +286,11 @@ class CmakeBuilder(BuildHandler):
         if not os.path.isfile(manifest_fname):
             self.pprint(f'missing install_manifest.txt: {manifest_fname}')
 
-        install_cache_fname = os.path.join(installdir, ".install_cache", pkgname)
+        install_cache_dir = os.path.join(installdir, ".install_cache")
+        if not os.path.exists(install_cache_dir):
+            os.mkdir(install_cache_dir)
+            
+        install_cache_fname = os.path.join(install_cache_dir, pkgname)
+       
         with open(manifest_fname, 'r') as manifest, open(install_cache_fname, "a+") as install_cache: 
             install_cache.write(manifest.read())
