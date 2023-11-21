@@ -76,6 +76,7 @@ def do_main():
     grow_parser.add_argument('--cmake-args', nargs='+', required=False, help='specify additional cmake args to be appended to each recipe (leading -D must be omitted)')
     grow_parser.add_argument('--no-deps', '-n', required=False, action='store_true', help='skip dependency fetch and build step')
     grow_parser.add_argument('--clean', required=False, action='store_true', help='remove pkg build folder before grow')
+    grow_parser.add_argument('--recursive-clean', required=False, action='store_true', help='remove pkg build folder and recursive dependencies build folders before grow')
     grow_parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required (if empty, user is prompted for password); note: to be used with care, as exposing your password might be harmful!')
     grow_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
 
@@ -190,9 +191,16 @@ def do_main():
 
     # clean functionality
     if args.command == grow_cmd and args.clean:
-        clean(pkg=args.recipe,
+        clean(pkgname=args.recipe,
               buildroot=buildroot,
-              installdir=installdir,
+              recursive=False,
+              verbose=args.verbose)
+    
+    # clean functionality
+    if args.command == grow_cmd and args.recursive_clean:
+        clean(pkgname=args.recipe,
+              buildroot=buildroot,
+              recursive=True,
               verbose=args.verbose)
 
     # handle modes

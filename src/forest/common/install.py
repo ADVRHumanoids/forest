@@ -192,10 +192,23 @@ def _remove_fname(pkg: str, fname: str, installdir:str, verbose: bool):
     return True
 
 
-def clean(pkg: str, buildroot: str,  installdir: str, verbose: bool):
-    pprint = ProgressReporter.get_print_fn(pkg)      
-    return _remove_buildir(pkg, verbose)
+def clean(pkgname: str, buildroot: str, recursive: bool, verbose: bool):
+    pprint = ProgressReporter.get_print_fn(pkgname)   
+    
+    try:
+        pkg = package.Package.from_name(name=pkgname)
+        
+    except FileNotFoundError:
+        pprint(f'recipe file not found (searched in {Cookbook.get_recipe_basedir()})')
+        return False
+    
+    if recursive:
+        for dep in pkg.depends:     
+            clean(pkgname=dep, buildroot=buildroot, recursive=recursive, verbose=verbose)
 
+    builddir = os.path.join(buildroot, pkgname)
+    if os.path.exists(builddir):
+        return _remove_buildir(pkgname, verbose)
 
 def _remove_buildir(pkg, verbose):
     builddir = os.path.join(buildroot, pkg)
