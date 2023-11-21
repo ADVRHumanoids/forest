@@ -181,7 +181,7 @@ def do_main():
         return True
 
     # uninstall functionality
-    if args.command == grow_cmd and args.uninstall:
+    if args.command == cut_cmd:
         return uninstall_package(pkg=args.recipe,
                                  buildroot=buildroot,
                                  installdir=installdir,
