@@ -81,6 +81,7 @@ def do_main():
 
     cut_cmd = 'cut'
     cut_parser = subparsers.add_parser(cut_cmd, help='remove build and install')
+    cut_parser.add_argument('recipe', nargs='?', metavar='RECIPE', choices=available_recipes, help='name of recipe to cut')
     cut_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     
     recipes_cmd = 'add-recipes'
