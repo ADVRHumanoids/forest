@@ -1,1 +1,1 @@
-eval "$(register-python-argcomplete forest)"
+eval "$(register-python-argcomplete3 forest)"
