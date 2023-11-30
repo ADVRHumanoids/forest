@@ -219,8 +219,9 @@ def write_setup_file():
     # without using distutils, which is deprecated
     import sys 
     import sysconfig
+    import site
     platlib_path = sysconfig.get_path(name='platlib')    
-    platlib_relpath = os.path.relpath(path=platlib_path, start=sys.prefix)
+    platlib_relpath = os.path.relpath(path=site.USER_SITE, start=site.USER_BASE)
 
     # replace placeholders
     this_dir = os.path.dirname(os.path.abspath(__file__))
