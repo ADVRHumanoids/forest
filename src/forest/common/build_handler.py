@@ -213,30 +213,63 @@ class CmakeBuilder(BuildHandler):
                             cmake_args=args,
                             cmakelists=data.get('cmakelists', '.'),
                             target=data.get('target', 'install'))
-
+    
 
     def build(self, 
+              srcdir: str,
+              builddir: str, 
+              installdir: str,
+              buildtype: str,
+              jobs: int,
+              reconfigure=False) -> bool:
+        
+        # check if package in cache
+        if self.pkgname in BuildHandler.build_cache:
+            self.pprint('already built, skipping')
+            return True
+        
+        srcdir_list = []
+        builddir_list = []
+        
+        if isinstance(self.cmakelists_folder, str):
+            srcdir_list = [os.path.join(srcdir, self.cmakelists_folder)]
+            builddir_list = [builddir]
+        else:
+            for item in self.cmakelists_folder:
+                sub_name, sub_folder = list(item.items())[0]
+                srcdir_list.append(os.path.join(srcdir, sub_folder))
+                builddir_list.append(os.path.join(builddir, sub_name))
+        
+
+        for srcdir, builddir in zip(srcdir_list, builddir_list):
+            
+            ret = self._build_single(srcdir=srcdir,
+                                     builddir=builddir,
+                                     installdir=installdir,
+                                     buildtype=buildtype,
+                                     jobs=jobs,
+                                     reconfigure=reconfigure)
+            
+            if not ret:
+                return False
+
+        return True        
+
+
+    def _build_single(self, 
               srcdir: str, 
               builddir: str, 
               installdir: str,
               buildtype: str,
               jobs: int,
               reconfigure=False) -> bool:
-
-        # check if package in cache
-        if self.pkgname in BuildHandler.build_cache:
-            self.pprint('already built, skipping')
-            return True
-
-        # path to folder containing cmakelists
-        cmakelists = os.path.join(srcdir, self.cmakelists_folder)
         
         # create build folder if needed
         if not os.path.exists(builddir):
-            os.mkdir(builddir)
+            os.makedirs(builddir)
 
         # create cmake tools
-        cmake = CmakeTools(srcdir=cmakelists, builddir=builddir)
+        cmake = CmakeTools(srcdir=srcdir, builddir=builddir)
 
         # configure
         if not cmake.is_configured() or reconfigure:
@@ -285,6 +318,7 @@ class CmakeBuilder(BuildHandler):
         manifest_fname = os.path.join(builddir, 'install_manifest.txt')
         if not os.path.isfile(manifest_fname):
             self.pprint(f'missing install_manifest.txt: {manifest_fname}')
+            return
 
         install_cache_dir = os.path.join(installdir, ".install_cache")
         if not os.path.exists(install_cache_dir):
