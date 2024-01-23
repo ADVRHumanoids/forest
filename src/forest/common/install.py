@@ -70,7 +70,7 @@ def install_package(pkg: str,
             pprint(f'depends on {dep} -> build found, building..')   
 
             ok = install_package(dep, srcroot, buildroot, installdir, 
-                    buildtype, jobs, reconfigure, no_deps=True)   
+                    buildtype, jobs, reconfigure, no_deps=no_deps)   
 
             if not ok:
                 pprint(f'failed to build dependency {dep}')
