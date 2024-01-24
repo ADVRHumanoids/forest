@@ -78,6 +78,7 @@ def do_main():
     grow_parser.add_argument('--clean', required=False, action='store_true', help='remove pkg build folder before grow')
     grow_parser.add_argument('--pwd', '-p', required=False, help='user password to be used when sudo permission is required (if empty, user is prompted for password); note: to be used with care, as exposing your password might be harmful!')
     grow_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
+    grow_parser.add_argument('--src-only', '-s', required=False, action='store_true', help='only clone sources')
 
     cut_cmd = 'cut'
     cut_parser = subparsers.add_parser(cut_cmd, help='remove build and install')
@@ -220,7 +221,8 @@ def do_main():
                                   buildtype=args.default_build_type,
                                   jobs=args.jobs,
                                   reconfigure=args.force_reconfigure,
-                                  no_deps=args.no_deps
+                                  no_deps=args.no_deps,
+                                  src_only=args.src_only
                                   )
 
         return success

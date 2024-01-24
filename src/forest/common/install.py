@@ -36,7 +36,8 @@ def install_package(pkg: str,
                     buildtype: str,
                     jobs: int,
                     reconfigure=False, 
-                    no_deps=False):
+                    no_deps=False,
+                    src_only=False):
     
     """
     Fetch a recipe file from the default path using the given package name, 
@@ -70,7 +71,7 @@ def install_package(pkg: str,
             pprint(f'depends on {dep} -> build found, building..')   
 
             ok = install_package(dep, srcroot, buildroot, installdir, 
-                    buildtype, jobs, reconfigure, no_deps=no_deps)   
+                    buildtype, jobs, reconfigure, no_deps=no_deps, src_only=src_only)   
 
             if not ok:
                 pprint(f'failed to build dependency {dep}')
@@ -93,7 +94,7 @@ def install_package(pkg: str,
             
             # note: reconfigure needed if there's build but not install
             ok = install_package(dep, srcroot, buildroot, installdir, 
-                    buildtype, jobs, reconfigure, no_deps=no_deps)
+                    buildtype, jobs, reconfigure, no_deps=no_deps, src_only=src_only)
 
             if not ok:
                 pprint(f'failed to install dependency {dep}')
@@ -109,13 +110,17 @@ def install_package(pkg: str,
         return False 
     
     # configure and build
-    ok = build_package(pkg=pkg, 
-                       srcroot=srcroot, 
-                       buildroot=buildroot, 
-                       installdir=installdir, 
-                       buildtype=buildtype, 
-                       jobs=jobs, 
-                       reconfigure=reconfigure)
+    if src_only:
+        pprint('src_only mode: will not build')
+        ok = True
+    else:
+        ok = build_package(pkg=pkg, 
+                        srcroot=srcroot, 
+                        buildroot=buildroot, 
+                        installdir=installdir, 
+                        buildtype=buildtype, 
+                        jobs=jobs, 
+                        reconfigure=reconfigure)
 
     if ok:
         pprint('ok')
