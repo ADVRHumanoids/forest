@@ -162,6 +162,9 @@ class GitFetcher(FetchHandler):
 
     # this sets the global clone depth
     depth_override = None
+
+    # tag overrides
+    tag_overrides = {}
     
     def __init__(self, pkgname, server, repository, tag=None, proto='ssh', recursive=False) -> None:
 
@@ -191,6 +194,9 @@ class GitFetcher(FetchHandler):
 
         if len(tag_if_parsed) > 1:
             raise RuntimeError(f'[{pkgname}] tag_if conditions must be mutually exclusive')
+        
+        # override has precendence
+        tag = GitFetcher.tag_overrides.get(pkgname, tag)
 
         # default proto from env
         default_proto = os.getenv('HHCM_FOREST_CLONE_DEFAULT_PROTO')
