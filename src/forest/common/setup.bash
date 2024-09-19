@@ -13,3 +13,8 @@ export HHCM_FOREST_PATH=£ROOTDIR£:$HHCM_FOREST_PATH
 if [ -d £PREFIX£/share/forest_env_hook ]; then
     for f in £PREFIX£/share/forest_env_hook/*; do source $f; done
 fi
+
+# activate venv
+if [ -d £ROOTDIR£/venv ]; then
+    source £ROOTDIR£/venv/bin/activate
+fi

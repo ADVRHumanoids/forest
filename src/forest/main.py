@@ -9,7 +9,7 @@ from datetime import datetime
 from forest import cmake_tools
 from forest.common.eval_handler import EvalHandler
 
-from forest.common.install import install_package, write_setup_file, write_ws_file, check_ws_file, uninstall_package, \
+from forest.common.install import install_package, write_setup_file, write_ws_file, create_ws_venv, check_ws_file, uninstall_package, \
     clean
 from forest.common.recipe import RecipeSource, Cookbook
 from forest.common import sudo_refresh
@@ -60,7 +60,7 @@ def do_main():
 
     init_cmd = 'init'
     init_parser = subparsers.add_parser(init_cmd, help='initialize the current folder as a forest workspace')
-
+    init_parser.add_argument('--venv', action='store_true', help='do not create a python virtualenv for this workspace')
 
     grow_cmd = 'grow'
     grow_parser = subparsers.add_parser(grow_cmd, help='clone, configure, and build a recipe')
@@ -98,8 +98,13 @@ def do_main():
 
     # initialize workspace
     if args.command == init_cmd:
+
         # create marker file
         write_ws_file(rootdir=rootdir)  # note: error on failure?
+
+        # create virtualenv
+        if args.venv:
+            create_ws_venv(rootdir=rootdir)
 
     if args.version:
         config = ConfigParser()

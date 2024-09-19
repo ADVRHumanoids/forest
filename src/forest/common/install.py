@@ -270,3 +270,25 @@ def write_ws_file(rootdir):
     with open(ws_file, 'w') as f:
         f.write('# forest marker file \n')
         return True
+
+def create_ws_venv(rootdir):
+    
+    venv_name = os.path.basename(rootdir)
+    
+    if venv_name[-3:] == '_ws':
+        venv_name = venv_name[:-3] + '_venv'
+    else:
+        venv_name = venv_name + '_venv'
+    
+    if os.path.exists(f'{rootdir}/{venv_name}'):
+        return True
+    
+    print(f'creating virtual environment "{venv_name}"')
+
+    ok = proc_utils.call_process(f'/usr/bin/env python3 -m venv --system-site-packages {rootdir}/{venv_name}'.split())
+    
+    if not ok:
+        print('creating virtual environment failed')
+        return False 
+    
+    os.symlink(f'{venv_name}', f'venv')
