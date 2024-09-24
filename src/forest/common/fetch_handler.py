@@ -138,10 +138,14 @@ class CustomFetcher(FetchHandler):
         # create source folder
         os.mkdir(srcdir)
 
+        self.pprint(f'executing custom clone command..')
+
         # run commands
         with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
-            for cmd in self.commands:
+            ncmd = len(self.commands)
+            for i, cmd in enumerate(self.commands):
                 cmd_p = eh.process_string(cmd, {'srcdir': srcdir})
+                self.pprint(f'[{i+1}/{ncmd}] {cmd_p}')
                 if not proc_utils.call_process([cmd_p], cwd=tmpdir, shell=True, print_on_error=True):
                     self.pprint(f'{cmd_p} failed')
                     shutil.rmtree(srcdir, ignore_errors=True)

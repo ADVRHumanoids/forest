@@ -28,7 +28,7 @@ class BuildHandler:
         self.post_build_cmd = list()
 
         # env hook to install
-        self.env_hook_content = None
+        self.env_hooks = []
 
     
     def pre_build(self, builddir, srcdir, installdir):
@@ -60,13 +60,18 @@ class BuildHandler:
             proc_utils.call_process(args=[cmd], cwd=builddir, shell=True)
     
     def install_env_hook(self, installdir):
-        if self.env_hook_content is None:
+        if len(self.env_hooks) == 0:
             return 
+        
+        eh = eval_handler.EvalHandler.instance()
+        process_string = lambda cmd: eh.process_string(cmd, {'installdir': installdir})
+        env_hooks_processed = map(process_string, self.env_hooks)
 
         os.makedirs(f'{installdir}/share/forest_env_hook', exist_ok=True)
 
         with open(f'{installdir}/share/forest_env_hook/{self.pkgname}.bash', 'w') as f:
-            f.write(self.env_hook_content)
+            for eh in env_hooks_processed:
+                f.write(eh + '\n')
 
         self.pprint('installed environment hook, re-source your setup.bash')
 
@@ -126,14 +131,7 @@ class BuildHandler:
         builder.post_build_cmd = post_build
 
         # env hooks
-        env_hooks = data.get('env_hooks', list())
-        env_hook_content = str()
-        for hline in env_hooks:
-            env_hook_content += eh.process_string(hline, shell=False)
-            env_hook_content += '\n'
-        
-        builder.env_hook_content = env_hook_content if len(env_hooks) > 0 else None
-
+        builder.env_hooks = data.get('env_hooks', list())
 
         return builder
 
