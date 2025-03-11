@@ -1,4 +1,4 @@
 project(test_£PKG_NAME_exist)
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 find_package(£PKG_NAME REQUIRED)
