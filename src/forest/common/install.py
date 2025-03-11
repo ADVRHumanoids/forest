@@ -60,6 +60,11 @@ def install_package(pkg: str,
 
     # install dependencies if not found
     for dep in pkg.depends:
+        
+        # if no-deps mode, skip dependency installation
+        if no_deps:
+            pprint(f'skipping dependency {dep}')
+            continue
 
         # this dependency build directory name (if exists)
         dep_builddir = os.path.join(buildroot, dep)
@@ -80,11 +85,6 @@ def install_package(pkg: str,
             # go to next dependency
             continue
 
-        # if no-deps mode, skip dependency installation
-        if no_deps:
-            pprint(f'skipping dependency {dep}')
-            continue
-        
         # try to find-package this dependency
         dep_found = CmakeTools.find_package(dep)
 
