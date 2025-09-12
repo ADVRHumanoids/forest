@@ -51,7 +51,7 @@ def call_process(args: typing.List[str] = None,
         return proc.returncode == 0         
 
     try:
-        #  # universal_newlines=True equivalent to text=True (backward compatibility)
+        # universal_newlines=True equivalent to text=True (backward compatibility)
         pr = subprocess.Popen(args=popen_args,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, 
