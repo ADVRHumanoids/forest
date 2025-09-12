@@ -24,6 +24,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y python3-pip python3-setuptools cmake patchelf python3-venv
+          pip install build twine
           pip install .
       - name: Run bash tests
         run: python3 test/test_run_bash_tests.py
