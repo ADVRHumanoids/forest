@@ -17,7 +17,7 @@ from pprint import pprint
 
 from configparser import ConfigParser
 from pathlib import Path
-from pkg_resources import get_distribution
+from importlib.metadata import version as get_version
 
 import forest.common.forest_dirs as _forest_dirs
 from forest.common.forest_dirs import update_dirs
@@ -124,7 +124,7 @@ def do_main():
             version = f"hhcm-forest {config['metadata']['version']} ({src_path})"
 
         except KeyError:
-            version = get_distribution('hhcm-forest')
+            version = get_version('hhcm-forest')
 
         print(version)
 
