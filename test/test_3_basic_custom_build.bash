@@ -15,9 +15,10 @@ pwd
 forest init
 source setup.bash
 cp -r $TEST_DIR/recipes recipes
-forest grow custom_build --verbose -j 2
+forest grow custom_build  -j 2
 
 if [ ! -f $WORK_DIR/src/custom_build/a_file_2.txt ]; then exit 1; fi
 if [ ! -f $WORK_DIR/install/share/custom_build/b_file.txt ]; then exit 1; fi
+if [ ! -f $WORK_DIR/install/share/custom_build/v1.0.0.zip ]; then exit 1; fi
 
 SUCCESS=1

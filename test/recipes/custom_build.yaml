@@ -3,4 +3,5 @@ build:
   cmd:
     - touch {srcdir}/a_file_{jobs}.txt
     - mkdir -p {installdir}/share/custom_build
+    - cd {installdir}/share/custom_build && wget https://github.com/ADVRHumanoids/forest/archive/refs/tags/v1.0.0.zip
     - touch {installdir}/share/custom_build/b_file.txt
