@@ -52,6 +52,11 @@ def install_package(pkg: str,
     # custom print
     pprint = ProgressReporter.get_print_fn(pkg)
 
+    # skip if already built in this run
+    if pkg in _build_cache:
+        pprint(f'already built in this run, skipping')
+        return True
+
     # retrieve package info from recipe
     try:
         pkg = package.Package.from_name(name=pkg)
@@ -139,6 +144,7 @@ def install_package(pkg: str,
 
     if ok:
         pprint('ok')
+        _build_cache[pkg.name] = True
 
     return ok
 

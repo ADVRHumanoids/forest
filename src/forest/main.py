@@ -65,7 +65,7 @@ def do_main():
 
     grow_cmd = 'grow'
     grow_parser = subparsers.add_parser(grow_cmd, help='clone, configure, and build a recipe')
-    grow_parser.add_argument('recipe', nargs='?', metavar='RECIPE', choices=available_recipes, help='name of recipe with fetch and build information')
+    grow_parser.add_argument('recipe', nargs='*', metavar='RECIPE', choices=available_recipes, help='name of recipe(s) with fetch and build information')
     grow_parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     grow_parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
     grow_parser.add_argument('--config', '-c', nargs='+', required=False, help='specify configuration variables that can be used inside recipes')
@@ -203,7 +203,7 @@ def do_main():
         return Cookbook.add_recipes(recipe_source)
 
     # no recipe to install, exit
-    if args.command == grow_cmd and args.recipe is None:
+    if args.command == grow_cmd and not args.recipe:
         print('no recipe to build, exiting...')
         return True
 
@@ -216,10 +216,11 @@ def do_main():
 
     # clean functionality
     if args.command == grow_cmd and args.clean:
-        clean(pkg=args.recipe,
-              buildroot=_forest_dirs.buildroot,
-              installdir=_forest_dirs.installdir,
-              verbose=args.verbose)
+        for recipe in args.recipe:
+            clean(pkg=recipe,
+                  buildroot=_forest_dirs.buildroot,
+                  installdir=_forest_dirs.installdir,
+                  verbose=args.verbose)
 
     # handle modes
     if args.command == grow_cmd and args.mode is not None:
@@ -235,20 +236,27 @@ def do_main():
         # check ws is sourced
         if _forest_dirs.rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
             print('[warn] forest workspace does not appear to be sourced')
-        
-        print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
 
-        # perform required installation
-        success = install_package(pkg=args.recipe,
-                                  srcroot=_forest_dirs.srcroot,
-                                  buildroot=_forest_dirs.buildroot,
-                                  installdir=_forest_dirs.installdir,
-                                  buildtype=args.default_build_type,
-                                  jobs=args.jobs,
-                                  reconfigure=args.force_reconfigure,
-                                  no_deps=args.no_deps,
-                                  src_only=args.src_only
-                                  )
+        recipes_str = ' '.join(args.recipe)
+        print(f'building {recipes_str} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
+
+        # perform required installation for each requested recipe;
+        # install_package uses an internal cache to avoid re-building
+        # packages that were already built earlier in this run
+        success = True
+        for recipe in args.recipe:
+            ok = install_package(pkg=recipe,
+                                 srcroot=_forest_dirs.srcroot,
+                                 buildroot=_forest_dirs.buildroot,
+                                 installdir=_forest_dirs.installdir,
+                                 buildtype=args.default_build_type,
+                                 jobs=args.jobs,
+                                 reconfigure=args.force_reconfigure,
+                                 no_deps=args.no_deps,
+                                 src_only=args.src_only
+                                 )
+            if not ok:
+                success = False
 
         return success
 
