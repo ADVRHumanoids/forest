@@ -13,9 +13,16 @@ def _find_ws_root(start: str) -> str:
             return os.getcwd()
         current = parent
 
-
 rootdir = _find_ws_root(os.getcwd())
 recipesdir = os.path.join(rootdir, 'recipes')
 buildroot = os.path.join(rootdir, 'build')
 installdir = os.path.join(rootdir, 'install')
 srcroot = os.path.join(rootdir, 'src')
+
+def update_dirs():
+    global rootdir, recipesdir, buildroot, installdir, srcroot
+    rootdir = _find_ws_root(os.getcwd())
+    recipesdir = os.path.join(rootdir, 'recipes')
+    buildroot = os.path.join(rootdir, 'build')
+    installdir = os.path.join(rootdir, 'install')
+    srcroot = os.path.join(rootdir, 'src')

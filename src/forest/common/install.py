@@ -3,7 +3,7 @@ import os
 from forest.cmake_tools import CmakeTools
 from . import package
 from .print_utils import ProgressReporter
-from .forest_dirs import *
+from . import forest_dirs as _forest_dirs
 from forest.common import proc_utils
 from forest.common.recipe import Cookbook
 from forest.common import sys_deps as _sys_deps
@@ -248,12 +248,12 @@ def write_setup_file():
     setup_template = os.path.join(this_dir, 'setup.bash')
     with open(setup_template, 'r') as f:
         content = f.read()
-        content = content.replace('£PREFIX£', os.path.realpath(installdir))
-        content = content.replace('£SRCDIR£', os.path.realpath(srcroot))
-        content = content.replace('£ROOTDIR£', os.path.realpath(rootdir))
+        content = content.replace('£PREFIX£', os.path.realpath(_forest_dirs.installdir))
+        content = content.replace('£SRCDIR£', os.path.realpath(_forest_dirs.srcroot))
+        content = content.replace('£ROOTDIR£', os.path.realpath(_forest_dirs.rootdir))
         content = content.replace('£REL_SITE_PKG_PATH£', platlib_relpath)
     
-    setup_file = os.path.join(installdir, '..', 'setup.bash')
+    setup_file = os.path.join(_forest_dirs.installdir, '..', 'setup.bash')
     if not os.path.exists(setup_file):
         with open(setup_file, 'w') as f:
             f.write(content)

@@ -19,8 +19,9 @@ from configparser import ConfigParser
 from pathlib import Path
 from pkg_resources import get_distribution
 
-# define directories for source, build, install, and recipes
-from forest.common.forest_dirs import *
+import forest.common.forest_dirs as _forest_dirs
+from forest.common.forest_dirs import update_dirs
+
 
 # just a try-except wrapper to catch ctrl+c
 def main():
@@ -36,9 +37,9 @@ def main():
 
 # actual main
 def do_main():
- 
+    
     # set recipe dir
-    Cookbook.set_recipe_basedir(recipesdir)
+    Cookbook.set_recipe_basedir(_forest_dirs.recipesdir)
 
     # available recipes
     available_recipes = Cookbook.get_available_recipes()
@@ -102,13 +103,17 @@ def do_main():
     # initialize workspace
     if args.command == init_cmd:
 
-        # create marker file
-        write_ws_file(rootdir=rootdir)  # note: error on failure?
+        # create marker file using cwd unconditionally (never walk up)
+        write_ws_file(rootdir=os.getcwd())  # note: error on failure?
 
         # create virtualenv
         if args.venv:
-            create_ws_venv(rootdir=rootdir)
-
+            create_ws_venv(rootdir=os.getcwd())    
+        
+        # update workspace root and related directories
+        update_dirs()
+        Cookbook.set_recipe_basedir(_forest_dirs.recipesdir)
+        
     if args.version:
         config = ConfigParser()
         src_path = Path(os.path.abspath(__file__)).parent.parent
@@ -126,13 +131,13 @@ def do_main():
         return True
 
     # check ws
-    if not check_ws_file(rootdir=rootdir):
-        print(f'current directory {rootdir} is not a forest workspace.. \
+    if not check_ws_file(rootdir=_forest_dirs.rootdir):
+        print(f'current directory {_forest_dirs.rootdir} is not a forest workspace.. \
     have you called forest init ?', file=sys.stderr)
         return False
 
     # create directories (if do not exist)
-    for dir in (buildroot, installdir, srcroot, recipesdir):
+    for dir in (_forest_dirs.buildroot, _forest_dirs.installdir, _forest_dirs.srcroot, _forest_dirs.recipesdir):
         if not os.path.exists(dir):
             os.mkdir(dir)
 
@@ -205,15 +210,15 @@ def do_main():
     # uninstall functionality
     if args.command == cut_cmd:
         return uninstall_package(pkg=args.recipe,
-                                 buildroot=buildroot,
-                                 installdir=installdir,
+                                 buildroot=_forest_dirs.buildroot,
+                                 installdir=_forest_dirs.installdir,
                                  verbose=args.verbose)
 
     # clean functionality
     if args.command == grow_cmd and args.clean:
         clean(pkg=args.recipe,
-              buildroot=buildroot,
-              installdir=installdir,
+              buildroot=_forest_dirs.buildroot,
+              installdir=_forest_dirs.installdir,
               verbose=args.verbose)
 
     # handle modes
@@ -228,16 +233,16 @@ def do_main():
     if args.command == grow_cmd:
 
         # check ws is sourced
-        if rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
+        if _forest_dirs.rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
             print('[warn] forest workspace does not appear to be sourced')
         
         print(f'building {args.recipe} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
 
         # perform required installation
         success = install_package(pkg=args.recipe,
-                                  srcroot=srcroot,
-                                  buildroot=buildroot,
-                                  installdir=installdir,
+                                  srcroot=_forest_dirs.srcroot,
+                                  buildroot=_forest_dirs.buildroot,
+                                  installdir=_forest_dirs.installdir,
                                   buildtype=args.default_build_type,
                                   jobs=args.jobs,
                                   reconfigure=args.force_reconfigure,
