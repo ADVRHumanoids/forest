@@ -14,14 +14,15 @@ if __name__ == '__main__':
     sep = '\n  - '
     print(f'found bash test files in {curr_dir}: {sep.join(bash_test_files)}')
     
-    failed = False
+    failed = []
     for f in bash_test_files:
         print(f'\n\n\n>>>>>>> running test {f}')
         try:
             subprocess.run(f, check=True)
         except subprocess.CalledProcessError as e:
-            failed = True 
+            failed.append(f)
             print(e)
 
-    if failed:
+    if len(failed) > 0:
+        print(f'\n\nFailed tests: {sep.join(failed)}')
         sys.exit(1)
