@@ -80,6 +80,9 @@ def do_main():
     grow_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     grow_parser.add_argument('--src-only', '-s', required=False, action='store_true', help='only clone sources')
     grow_parser.add_argument('--tag-override', '-o', required=False, type=str, help='yaml file containing {pkgname: tag} dictionary')
+    grow_parser.add_argument('--pkg-manager', required=False, default=None,
+                             choices=['apt', 'dnf', 'pacman', 'brew', 'conda'],
+                             help='system package manager to use for system_depends (default: auto-detected)')
 
     cut_cmd = 'cut'
     cut_parser = subparsers.add_parser(cut_cmd, help='remove build and install')
@@ -182,6 +185,11 @@ def do_main():
         from forest.common.fetch_handler import GitFetcher
         import yaml
         GitFetcher.tag_overrides = yaml.safe_load(open(args.tag_override, 'r'))
+
+    # package manager override for system_depends
+    if args.command == grow_cmd and args.pkg_manager is not None:
+        from forest.common import sys_deps
+        sys_deps.pkg_manager_override = args.pkg_manager
 
     # if required, add a recipe repository to the list of remotes
     if args.command == recipes_cmd:

@@ -1,0 +1,12 @@
+clone:
+  type: git
+  server: github.com
+  repository: advrhumanoids/forest-test.git
+  tag: master
+
+system_depends:
+ - cowsay
+ - sl
+
+pip_depends:
+ - meme

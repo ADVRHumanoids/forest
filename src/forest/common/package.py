@@ -18,6 +18,8 @@ class BasicPackage:
     def __init__(self, name, depends: List[str]=None) -> None:
         self.name = name 
         self.depends = depends if depends is not None else list()
+        self.system_depends: List[str] = []
+        self.pip_depends: List[str] = []
         
 
 class Package(BasicPackage):
@@ -61,6 +63,10 @@ class Package(BasicPackage):
 
         # create pkg
         pkg = Package(name=name, depends=depends)
+
+        # system / pip dependencies
+        pkg.system_depends = recipe.get('system_depends') or []
+        pkg.pip_depends = recipe.get('pip_depends') or []
 
         # custom fetcher and builder if we have clone/build information
         if 'clone' in recipe.keys():

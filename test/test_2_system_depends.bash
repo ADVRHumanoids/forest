@@ -15,10 +15,14 @@ pwd
 forest init
 source setup.bash
 cp -r $TEST_DIR/recipes recipes
-sudo apt remove -y sl || true
+sudo apt remove -y sl cowsay || true
+python -m pip uninstall -y meme || true
+! python -m pip show meme
 ! dpkg -s sl
 ! dpkg -s cowsay
-forest grow sl_from_apt --verbose
+forest grow pkg_with_system_deps --verbose
 dpkg -s sl 
+dpkg -s cowsay
+python -m pip show meme
 
 SUCCESS=1

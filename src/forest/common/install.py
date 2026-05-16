@@ -6,6 +6,7 @@ from .print_utils import ProgressReporter
 from .forest_dirs import *
 from forest.common import proc_utils
 from forest.common.recipe import Cookbook
+from forest.common import sys_deps as _sys_deps
 
 _build_cache = dict()
 
@@ -105,6 +106,20 @@ def install_package(pkg: str,
             pprint(f'depends on {dep} -> found')
     
     srcdir = os.path.join(srcroot, pkg.name)
+
+    # install system / pip dependencies declared in the recipe
+    if pkg.system_depends:
+        pprint(f'installing system dependencies: {pkg.system_depends}')
+        if not _sys_deps.install_system_deps(pkg.system_depends, verbose=proc_utils.call_process_verbose):
+            pprint('failed to install system dependencies')
+            return False
+
+    if pkg.pip_depends:
+        pprint(f'installing pip dependencies: {pkg.pip_depends}')
+        if not _sys_deps.install_pip_deps(pkg.pip_depends, verbose=proc_utils.call_process_verbose):
+            pprint('failed to install pip dependencies')
+            return False
+
     if not pkg.fetcher.fetch(srcdir):
         pprint('failed to fetch package')
         return False 
