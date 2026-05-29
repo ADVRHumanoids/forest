@@ -27,11 +27,11 @@ from forest.common.forest_dirs import update_dirs
 def main():
     try:
         if not do_main():
-            print('(failed)')
+            print('(failed)', file=sys.stderr)
             sys.exit(1)
         sys.exit(0)
     except KeyboardInterrupt:
-        print('\nfailed (interrupted by user)')
+        print('\nfailed (interrupted by user)', file=sys.stderr)
         sys.exit(1)
 
 
@@ -96,6 +96,11 @@ def do_main():
     recipes_parser.add_argument('--tag', '-t', required=False, default='master')
     recipes_parser.add_argument('--verbose', '-v', required=False, action='store_true', help='print additional information')
     recipes_parser.add_argument('--clone-protocol', required=False, choices=cloneprotos, help='override clone protocol')
+
+    freeze_cmd = 'freeze'
+    freeze_parser = subparsers.add_parser(freeze_cmd, help='snapshot all src repos into forest.lock (pkgname: sha1)')
+    freeze_parser.add_argument('--append', '-a', action='store_true', help='update existing forest.lock in place instead of overwriting it')
+    freeze_parser.add_argument('--ignore-errors', action='store_true', help='write forest.lock even if some repos are invalid or have local changes')
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -201,6 +206,11 @@ def do_main():
         print('adding recipes...')
         recipe_source = RecipeSource.FromUrl(args.url, args.tag, force_proto=args.clone_protocol)
         return Cookbook.add_recipes(recipe_source)
+
+    # freeze: snapshot all src repos
+    if args.command == freeze_cmd:
+        from forest.common.freeze import freeze
+        return freeze(append=args.append, ignore_errors=args.ignore_errors)
 
     # no recipe to install, exit
     if args.command == grow_cmd and not args.recipe:
