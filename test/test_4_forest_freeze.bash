@@ -31,23 +31,24 @@ grep -q "ros_pkg: ${SHA1_ROS_PKG}" forest.lock
 echo "test 1 passed: forest.lock created with correct sha1s"
 
 # --- test 2: freeze fails on dirty repo ---
-echo "dirty" >> src/git_clone_sha1/README.md
+TRACKED_FILE=$(git -C src/git_clone_sha1 ls-files | head -1)
+echo "dirty" >> "src/git_clone_sha1/$TRACKED_FILE"
 if forest freeze 2>/dev/null; then
     echo "test 2 FAILED: should have failed on dirty repo"
     exit 1
 fi
-git -C src/git_clone_sha1 checkout -- . && git -C src/git_clone_sha1 clean -fd
+git -C src/git_clone_sha1 checkout -- .
 echo "test 2 passed: freeze correctly rejected dirty repo"
 
 # --- test 3: --ignore-errors on dirty repo still produces lock ---
-echo "dirty" >> src/git_clone_sha1/README.md
+echo "dirty" >> "src/git_clone_sha1/$TRACKED_FILE"
 forest freeze --ignore-errors
 grep -q "ros_pkg: ${SHA1_ROS_PKG}" forest.lock
 if grep -q "git_clone_sha1:" forest.lock; then
     echo "test 3 FAILED: dirty repo should be absent from lock"
     exit 1
 fi
-git -C src/git_clone_sha1 checkout -- . && git -C src/git_clone_sha1 clean -fd
+git -C src/git_clone_sha1 checkout -- .
 echo "test 3 passed: --ignore-errors skipped dirty repo and wrote lock"
 
 # --- test 4: freeze fails on non-git directory ---

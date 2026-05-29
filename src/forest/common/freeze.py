@@ -36,9 +36,9 @@ def freeze(append: bool = False, ignore_errors: bool = False) -> bool:
             errors.append(f'{pkg}: not a git repository')
             continue
 
-        # check for local changes
+        # check for local changes (tracked files only; untracked files are irrelevant for the lock)
         status = subprocess.run(
-            ['git', 'status', '--porcelain'],
+            ['git', 'status', '--porcelain', '--untracked-files=no'],
             cwd=pkgdir, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True
         )
         if status.stdout.strip():
