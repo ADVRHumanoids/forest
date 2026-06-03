@@ -4,8 +4,8 @@ from time import sleep
 import typing
 
 
-make_regrex_pattern = '\[((?:\s|\d)(?:\s|\d)\d)%\]'
-git_regrex_pattern = 'Receiving objects: ((?:\s|\d)(?:\s|\d)\d)% \('
+make_regrex_pattern = r'\[((?:\s|\d)(?:\s|\d)\d)%\]'
+git_regrex_pattern = r'Receiving objects: ((?:\s|\d)(?:\s|\d)\d)% \('
 
 
 def find_progress(line: str, regrex_pattern) -> float:
