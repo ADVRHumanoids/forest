@@ -10,6 +10,8 @@ Supported package managers (``--pkg-manager`` CLI flag):
   pacman – Arch Linux
 """
 
+from __future__ import annotations
+
 import shutil
 import sys
 
