@@ -23,4 +23,9 @@ source setup.bash
 # test empty recipe
 forest grow empty
 
+# test current package fallback from a source subfolder
+mkdir -p src/empty/subfolder
+cd src/empty/subfolder
+forest grow --verbose
+
 SUCCESS=1

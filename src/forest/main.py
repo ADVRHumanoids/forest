@@ -23,6 +23,21 @@ import forest.common.forest_dirs as _forest_dirs
 from forest.common.forest_dirs import update_dirs
 
 
+def _get_current_src_package():
+    cwd = Path(os.getcwd()).resolve()
+    srcroot = Path(_forest_dirs.srcroot).resolve()
+
+    try:
+        relative_path = cwd.relative_to(srcroot)
+    except ValueError:
+        return None
+
+    if not relative_path.parts:
+        return None
+
+    return relative_path.parts[0]
+
+
 # just a try-except wrapper to catch ctrl+c
 def main():
     try:
@@ -149,6 +164,9 @@ def do_main():
     # create setup.bash if does not exist
     write_setup_file()
 
+    # write path to ws
+    print(f'[forest] workspace: {_forest_dirs.rootdir}')
+
     # verbose mode will show output of any called process
     if args.verbose:
         from forest.common import proc_utils
@@ -203,7 +221,7 @@ def do_main():
 
     # if required, add a recipe repository to the list of remotes
     if args.command == recipes_cmd:
-        print('adding recipes...')
+        print('[forest] adding recipes...')
         recipe_source = RecipeSource.FromUrl(args.url, args.tag, force_proto=args.clone_protocol)
         return Cookbook.add_recipes(recipe_source)
 
@@ -212,10 +230,14 @@ def do_main():
         from forest.common.freeze import freeze
         return freeze(append=args.append, ignore_errors=args.ignore_errors)
 
-    # no recipe to install, exit
+    # no recipe provided: infer the package from the current src folder
     if args.command == grow_cmd and not args.recipe:
-        print('no recipe to build, exiting...')
-        return True
+        current_package = _get_current_src_package()
+        if current_package is None:
+            print('[forest] no recipe to build, exiting...')
+            return True
+        print(f'[forest] no recipe given, using current source package: {current_package}')
+        args.recipe = [current_package]
 
     # uninstall functionality
     if args.command == cut_cmd:
@@ -245,10 +267,10 @@ def do_main():
 
         # check ws is sourced
         if _forest_dirs.rootdir not in os.environ.get('HHCM_FOREST_PATH', '').split(':'):
-            print('[warn] forest workspace does not appear to be sourced')
+            print('[forest] workspace does not appear to be sourced')
 
         recipes_str = ' '.join(args.recipe)
-        print(f'building {recipes_str} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
+        print(f'[forest] building {recipes_str} with {args.jobs} parallel job{"s" if int(args.jobs) > 1 else ""}')
 
         # perform required installation for each requested recipe;
         # install_package uses an internal cache to avoid re-building
