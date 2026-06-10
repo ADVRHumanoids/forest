@@ -80,7 +80,7 @@ def do_main():
 
     grow_cmd = 'grow'
     grow_parser = subparsers.add_parser(grow_cmd, help='clone, configure, and build a recipe')
-    grow_parser.add_argument('recipe', nargs='*', metavar='RECIPE', choices=available_recipes, help='name of recipe(s) with fetch and build information')
+    grow_parser.add_argument('recipe', nargs='*', metavar='RECIPE', help='name of recipe(s) with fetch and build information')
     grow_parser.add_argument('--jobs', '-j', default=1, help='parallel jobs for building')
     grow_parser.add_argument('--mode', '-m', nargs='+', required=False, help='specify modes that are used to set conditional compilation flags (e.g., cmake args)')
     grow_parser.add_argument('--config', '-c', nargs='+', required=False, help='specify configuration variables that can be used inside recipes')
@@ -119,6 +119,12 @@ def do_main():
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
+
+    if args.command == grow_cmd and args.recipe and available_recipes is not None:
+        invalid_recipes = [recipe for recipe in args.recipe if recipe not in available_recipes]
+        if invalid_recipes:
+            choices = ', '.join(f"'{recipe}'" for recipe in available_recipes)
+            grow_parser.error(f"argument RECIPE: invalid choice: {invalid_recipes[0]!r} (choose from {choices})")
 
     # initialize workspace
     if args.command == init_cmd:
