@@ -61,6 +61,16 @@ def do_main():
     if len(available_recipes) == 0:
         available_recipes = None
 
+    # subclass list so __contains__ is overridden at the class level (instance-level dunder patching is ignored by Python)
+    # this makes argparse choices accept an empty string / None so that `grow` with no recipe args infers the package from cwd
+    class _RecipeList(list):
+        def __contains__(self, item):
+            return True if not item else super().__contains__(item)
+
+    if available_recipes is not None:
+        available_recipes = _RecipeList(available_recipes)
+    
+
     # parse cmd line args
     buildtypes = ['None', 'RelWithDebInfo', 'Release', 'Debug']
     cloneprotos = ['ssh', 'https']
