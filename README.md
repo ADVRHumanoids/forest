@@ -88,12 +88,17 @@ optional arguments:
                         might be harmful!
   --verbose, -v         print additional information
   --src-only, -s        only clone sources, skip build step
-  --tag-override FILE, -o FILE
-                        yaml file containing a {pkgname: tag} dictionary;
-                        overrides the tag/branch/commit specified in each
-                        recipe for the listed packages. Useful in combination
-                        with forest.lock to reproduce a known-good build:
-                        forest grow my_package --tag-override forest.lock
+  --tag-override TAG_OVERRIDE [TAG_OVERRIDE ...], -o TAG_OVERRIDE [TAG_OVERRIDE ...]
+                        override the tag/branch/commit specified in recipes.
+                        A single value ending in .lock, .yaml, .yml, or .json
+                        is loaded as a {pkgname: tag} mapping file. Any other
+                        single value overrides the tag for the single selected
+                        recipe. Multiple values must use pkg:=tag syntax.
+                        Examples:
+                        forest grow my_package -o devel
+                        forest grow my_package -o forest.lock
+                        forest grow my_package -o overrides.json
+                        forest grow my_package -o dep_a:=main dep_b:=v1.2.3
 ```
 
 ### forest freeze
@@ -115,4 +120,3 @@ Example `forest.lock`:
 my_package: 4a7f3c1d2e8b0a9f6c5d3e2b1a0f9e8d7c6b5a4f
 other_package: 1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c
 ```
-
