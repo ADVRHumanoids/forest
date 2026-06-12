@@ -13,6 +13,7 @@ from forest.common.install import install_package, write_setup_file, write_ws_fi
     clean
 from forest.common.recipe import RecipeSource, Cookbook
 from forest.common import sudo_refresh
+from forest.common.grow_targets import get_current_src_package, get_workspace_src_recipes, is_workspace_root
 from forest.common.tag_override import parse_tag_overrides
 from pprint import pprint
 
@@ -22,21 +23,6 @@ from importlib.metadata import version as get_version
 
 import forest.common.forest_dirs as _forest_dirs
 from forest.common.forest_dirs import update_dirs
-
-
-def _get_current_src_package():
-    cwd = Path(os.getcwd()).resolve()
-    srcroot = Path(_forest_dirs.srcroot).resolve()
-
-    try:
-        relative_path = cwd.relative_to(srcroot)
-    except ValueError:
-        return None
-
-    if not relative_path.parts:
-        return None
-
-    return relative_path.parts[0]
 
 
 # just a try-except wrapper to catch ctrl+c
@@ -108,6 +94,8 @@ def do_main():
     grow_parser.add_argument('--src-only', '-s', required=False, action='store_true', help='only clone sources')
     grow_parser.add_argument('--tag-override', '-o', required=False, nargs='+', metavar='TAG_OVERRIDE',
                              help='tag override: mapping file (*.lock, *.yaml, *.yml, *.json), single tag for one recipe, or pkg:=tag entries')
+    grow_parser.add_argument('--blacklist', required=False, nargs='+', default=[], metavar='RECIPE',
+                             help='when growing all source packages from the workspace root, skip these recipes')
     grow_parser.add_argument('--pkg-manager', required=False, default=None,
                              choices=['apt', 'dnf', 'pacman', 'brew', 'conda'],
                              help='system package manager to use for system_depends (default: auto-detected)')
@@ -236,14 +224,34 @@ def do_main():
         from forest.common.freeze import freeze
         return freeze(append=args.append, ignore_errors=args.ignore_errors)
 
-    # no recipe provided: infer the package from the current src folder
+    # no recipe provided: infer the package from the current src folder,
+    # or all source packages when called from the workspace root
     if args.command == grow_cmd and not args.recipe:
-        current_package = _get_current_src_package()
+        current_package = get_current_src_package(os.getcwd(), _forest_dirs.srcroot)
         if current_package is None:
-            print('[forest] no recipe to build, exiting...')
-            return True
-        print(f'[forest] no recipe given, using current source package: {current_package}')
-        args.recipe = [current_package]
+            if not is_workspace_root(os.getcwd(), _forest_dirs.rootdir):
+                print('[forest] no recipe to build, exiting...')
+                return True
+
+            recipes = Cookbook.get_available_recipes()
+            args.recipe, warnings = get_workspace_src_recipes(_forest_dirs.srcroot, recipes, args.blacklist)
+            for warning in warnings:
+                print(warning, file=sys.stderr)
+
+            if not args.recipe:
+                print('[forest] no recipe to build, exiting...')
+                return True
+
+            recipes_str = ' '.join(args.recipe)
+            print(f'[forest] no recipe given, using workspace source packages: {recipes_str}')
+        else:
+            if args.blacklist:
+                parser.error('--blacklist can only be used when growing all source packages from the workspace root')
+
+            print(f'[forest] no recipe given, using current source package: {current_package}')
+            args.recipe = [current_package]
+    elif args.command == grow_cmd and args.blacklist:
+        parser.error('--blacklist can only be used when growing all source packages from the workspace root')
 
     # clone tag override
     if args.command == grow_cmd and args.tag_override is not None:

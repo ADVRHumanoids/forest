@@ -42,7 +42,7 @@ optional arguments:
 ```
 
  ### forest grow
- Builds a project according to the given recipe name, alongside its dependencies.
+ Builds projects according to the given recipe names, alongside their dependencies. When called from the workspace root without recipe arguments, `forest grow` builds every package directory under `src/` that has an available recipe and warns about source packages without recipes.
 
  ```bash
  usage: forest grow [-h] [--jobs JOBS] [--mode MODE [MODE ...]]
@@ -51,11 +51,13 @@ optional arguments:
                    [--force-reconfigure] [--list-eval-locals]
                    [--clone-protocol {ssh,https}] [--clone-depth CLONE_DEPTH]
                    [--cmake-args CMAKE_ARGS [CMAKE_ARGS ...]] [--no-deps]
-                   [--uninstall] [--clean] [--pwd PWD] [--verbose]
-                   [RECIPE]
+                   [--clean] [--pwd PWD] [--verbose] [--src-only]
+                   [--tag-override TAG_OVERRIDE [TAG_OVERRIDE ...]]
+                   [--blacklist RECIPE [RECIPE ...]]
+                   [RECIPE ...]
 
 positional arguments:
-  RECIPE                name of recipe with fetch and build information
+  RECIPE                name of recipe(s) with fetch and build information
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -99,6 +101,9 @@ optional arguments:
                         forest grow my_package -o forest.lock
                         forest grow my_package -o overrides.json
                         forest grow my_package -o dep_a:=main dep_b:=v1.2.3
+  --blacklist RECIPE [RECIPE ...]
+                        when growing all source packages from the workspace
+                        root, skip these recipes
 ```
 
 ### forest freeze
