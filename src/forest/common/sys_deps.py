@@ -16,6 +16,7 @@ import shutil
 import sys
 
 from forest.common import proc_utils
+from forest.common.eval_handler import EvalHandler
 
 # Global override set by main.py when --pkg-manager is passed
 pkg_manager_override: str | None = None
@@ -63,6 +64,7 @@ def install_system_deps(packages: list[str], verbose: bool = False) -> bool:
         return True
 
     manager = _detect_pkg_manager()
+    packages = [EvalHandler.instance().echo(pkg) for pkg in packages]  # expand env vars in package names
     cmd = _system_install_cmd(manager, packages)
 
     print(f'[sys_deps] installing system packages via {manager}: {packages}')
