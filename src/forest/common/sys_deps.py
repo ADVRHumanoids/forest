@@ -38,6 +38,20 @@ def _detect_pkg_manager() -> str:
 
     return 'apt'  # last resort
 
+def _system_check_installed_cmd(manager: str, packages: list[str]) -> list[str]:
+    """Return the command list to check if *packages* are installed with *manager*."""
+    cmds = {
+        'apt':    ['dpkg', '-s'] + packages,
+        'dnf':    ['rpm', '-q'] + packages,
+        'pacman': ['pacman', '-Q'] + packages,
+        'brew':   ['brew', 'list'] + packages,
+        'conda':  ['conda', 'list'] + packages,
+    }
+    if manager not in cmds:
+        raise ValueError(f"Unknown package manager '{manager}'. "
+                         f"Supported: {', '.join(cmds)}")
+    return cmds[manager]
+
 
 def _system_install_cmd(manager: str, packages: list[str]) -> list[str]:
     """Return the command list to install *packages* with *manager*."""
@@ -65,10 +79,15 @@ def install_system_deps(packages: list[str], verbose: bool = False) -> bool:
 
     manager = _detect_pkg_manager()
     packages = [EvalHandler.instance().echo(pkg) for pkg in packages]  # expand env vars in package names
-    cmd = _system_install_cmd(manager, packages)
-
+    
+    # check if packages are already installed
+    cmd = _system_check_installed_cmd(manager, packages)
+    if proc_utils.call_process(args=cmd, verbose=verbose, print_on_error=False):
+        return True
+    
     print(f'[sys_deps] installing system packages via {manager}: {packages}')
-    return proc_utils.call_process(args=cmd, verbose=verbose)
+    cmd = _system_install_cmd(manager, packages)
+    return proc_utils.call_process(args=cmd, verbose=verbose, print_on_error=True)
 
 
 def install_pip_deps(packages: list[str], verbose: bool = False) -> bool:
