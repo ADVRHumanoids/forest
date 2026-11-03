@@ -6,6 +6,7 @@ from .fetch_handler import FetchHandler
 from .build_handler import BuildHandler
 from forest.common.eval_handler import EvalHandler
 from forest.common.recipe import Cookbook
+from .dependency import Dependency
 
 
 class BasicPackage:
@@ -17,7 +18,7 @@ class BasicPackage:
 
     def __init__(self, name, depends: List[str]=None) -> None:
         self.name = name 
-        self.depends = depends if depends is not None else list()
+        self.depends = [Dependency.from_yaml(dep) for dep in (depends or [])]
         self.system_depends: List[str] = []
         self.pip_depends: List[str] = []
         
@@ -54,10 +55,7 @@ class Package(BasicPackage):
         eh = EvalHandler.instance()
 
         # dependency list if any
-        depends = recipe.get('depends', list())
-        if depends is None:
-            # empty entry "depends:" in yaml is parsed as None
-            depends = list()
+        depends = list(recipe.get('depends') or [])
         depends_if = recipe.get('depends_if', dict())
         depends.extend(eh.parse_conditional_dict(depends_if))
 

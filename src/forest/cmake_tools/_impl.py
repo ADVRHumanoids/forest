@@ -44,7 +44,9 @@ def _call_cmake(args, cwd='.', print_on_error=True, print_progress=False):
                                    update_regrex_pattern=update_regrex_pattern)
 
 
-def _find_package(pkg_name: str):
+def _find_package(pkg_name: str, version=None, exact=False, prefix_path=None):
+    from forest.common.dependency import Dependency
+    dep = Dependency(pkg_name, version, exact)
         
     with TemporaryDirectory(prefix="foresttmp-") as tmpdir:
 
@@ -56,12 +58,18 @@ def _find_package(pkg_name: str):
             find_package_tpl = f.read()
         
         # configure template
-        srcdir = find_package_tpl.replace('£PKG_NAME', pkg_name)
+        srcdir = find_package_tpl.replace('£PKG_NAME', dep.name)
+        srcdir = srcdir.replace('£VERSION_ARGS',
+                                '' if dep.version is None else
+                                dep.version + (' EXACT' if dep.exact else ''))
 
         # write it to tmp dir
         cmakelists_path = os.path.join(tmpdir, 'CMakeLists.txt')
         with open(cmakelists_path, 'w') as f:
             f.write(srcdir)
         
-        return _call_cmake('.', cwd=tmpdir, print_on_error=False)
+        args = ['.']
+        if prefix_path is not None:
+            args.append('-DCMAKE_PREFIX_PATH=' + os.path.abspath(prefix_path))
+        return _call_cmake(args + default_args, cwd=tmpdir, print_on_error=False)
 

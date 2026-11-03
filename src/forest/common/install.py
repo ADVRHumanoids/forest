@@ -63,6 +63,9 @@ def install_package(pkg: str,
     except FileNotFoundError:
         pprint(f'recipe file not found (searched in {Cookbook.get_recipe_path()})')
         return False
+    except ValueError as error:
+        pprint(f'invalid recipe: {error}')
+        return False
 
     # install dependencies if not found
     for dep in pkg.depends:
@@ -73,7 +76,7 @@ def install_package(pkg: str,
             continue
 
         # this dependency build directory name (if exists)
-        dep_builddir = os.path.join(buildroot, dep)
+        dep_builddir = os.path.join(buildroot, dep.name)
 
         # if dependency is built by this ws, trigger build
         if os.path.exists(dep_builddir):
@@ -81,29 +84,40 @@ def install_package(pkg: str,
             # dependency found and built by forest -> trigger build
             pprint(f'depends on {dep} -> build found, building..')   
 
-            ok = install_package(dep, srcroot, buildroot, installdir, 
+            ok = install_package(dep.name, srcroot, buildroot, installdir,
                     buildtype, jobs, reconfigure, no_deps=no_deps, src_only=src_only)   
 
             if not ok:
                 pprint(f'failed to build dependency {dep}')
                 return False 
 
+            if dep.version is not None and not src_only and not CmakeTools.find_package(
+                    dep.name, version=dep.version, exact=dep.exact, prefix_path=installdir):
+                pprint(f'dependency {dep} is not satisfied after building; check its recipe revision and CMake version metadata')
+                return False
+
             # go to next dependency
             continue
 
         # try to find-package this dependency
-        dep_found = CmakeTools.find_package(dep)
+        dep_found = CmakeTools.find_package(dep.name, version=dep.version,
+                                           exact=dep.exact, prefix_path=installdir)
 
         if not dep_found:
             # dependency not found -> install it
             pprint(f'depends on {dep} -> not found, installing..')
             
             # note: reconfigure needed if there's build but not install
-            ok = install_package(dep, srcroot, buildroot, installdir, 
+            ok = install_package(dep.name, srcroot, buildroot, installdir,
                     buildtype, jobs, reconfigure, no_deps=no_deps, src_only=src_only)
 
             if not ok:
                 pprint(f'failed to install dependency {dep}')
+                return False
+
+            if dep.version is not None and not src_only and not CmakeTools.find_package(
+                    dep.name, version=dep.version, exact=dep.exact, prefix_path=installdir):
+                pprint(f'dependency {dep} is not satisfied after installation; check its recipe revision and CMake version metadata')
                 return False
 
         else:

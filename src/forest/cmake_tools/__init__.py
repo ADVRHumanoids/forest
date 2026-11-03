@@ -50,9 +50,10 @@ class CmakeTools:
         return _build(self, target, jobs)
 
     @staticmethod
-    def find_package(pkg_name: str) -> bool:
+    def find_package(pkg_name: str, version=None, exact=False, prefix_path=None) -> bool:
         from ._impl import _find_package
-        return _find_package(pkg_name=pkg_name)
+        return _find_package(pkg_name=pkg_name, version=version, exact=exact,
+                             prefix_path=prefix_path)
 
     @staticmethod
     def call_cmake(args, cwd='.'):

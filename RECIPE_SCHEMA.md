@@ -174,18 +174,41 @@ Available substitutions in `cmd`: `{srcdir}`, `{installdir}`, `{builddir}`, `{jo
 
 ### `depends`
 
-A flat list of other recipe names that must be fetched and built before this package.
+A list of recipe dependencies. Entries may be plain names or mappings with a
+CMake version requirement. Quote versions to preserve them as strings.
 
 ```yaml
 depends:
-  - pinocchio
   - osqp
   - pybind11
+  - name: pinocchio
+    version: "2.6"
+  - name: example_library
+    version: "1.2.3"
+    exact: true
 ```
+
+`name` identifies both the recipe and the CMake package. `version` accepts one to
+four numeric components and requests a compatible version using
+`find_package(pinocchio 2.6 REQUIRED)`. Compatibility is defined by the package's
+CMake version metadata; it does not necessarily accept every newer version.
+`exact: true` adds `EXACT`. The default is `false`; `exact: true` requires a version.
+Version ranges and comparison operators are not supported.
+
+The probe searches the workspace installation prefix and honors global CMake
+arguments and the environment. Missing or incompatible dependencies are built
+using their existing recipes. Versioned dependencies are checked again after
+installation, including workspace rebuilds and dependencies already built in the
+current run. Failure stops the parent build. This checks installed package
+versions; it does not select Git tags or solve conflicting requirements. Set the
+dependency recipe's clone tag to a suitable revision. Packages must provide
+CMake version metadata (or a Find module that checks the requested version).
+`--no-deps` skips these checks; `--src-only` skips post-build validation.
 
 ### `depends_if`
 
 Conditional dependencies, added only when the given condition is satisfied.
+Entries accept the same plain-name and version-mapping forms as `depends`.
 
 ```yaml
 depends_if:
