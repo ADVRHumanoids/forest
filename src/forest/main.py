@@ -5,6 +5,7 @@ import getpass
 import os
 import sys
 import argcomplete
+from contextlib import ExitStack
 from datetime import datetime
 from forest import cmake_tools
 from forest.common.eval_handler import EvalHandler
@@ -39,6 +40,12 @@ def main():
 
 # actual main
 def do_main():
+    # Close background processes even if an exception retains this call's frame.
+    with ExitStack() as resources:
+        return _do_main(resources)
+
+
+def _do_main(resources):
     
     # set recipe dir
     Cookbook.set_recipe_basedir(_forest_dirs.recipesdir)
@@ -178,7 +185,7 @@ def do_main():
 
     # sudo handling 
     if args.command == grow_cmd and args.pwd is not None:
-        sudo_refresher = sudo_refresh.SudoRefresher(pwd=args.pwd)
+        resources.enter_context(sudo_refresh.SudoRefresher(pwd=args.pwd))
 
     # print available packages
     if args.list:

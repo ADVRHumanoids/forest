@@ -13,6 +13,7 @@ class SudoRefresher:
     """
 
     def __init__(self, pwd=None) -> None:
+        self.proc = None
 
         # first call to sudo is done inside parent process (sync)
         SudoRefresher._do_sudo(pwd)
@@ -20,10 +21,10 @@ class SudoRefresher:
 
         # then, start background process
         parent_pid = os.getpid()
-        multiprocessing.set_start_method('spawn')
-        self.proc = multiprocessing.Process(
+        self.proc = multiprocessing.get_context('spawn').Process(
                 target=SudoRefresher._do_sudo_refresh, 
-                args=(parent_pid, pwd)
+                args=(parent_pid, pwd),
+                daemon=True,
                 )
         self.proc.start()
 
@@ -53,10 +54,23 @@ class SudoRefresher:
             time.sleep(60)
             
     
-    def __del__(self):
-        self.proc.terminate()  # we don't need clean termination
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def close(self):
+        """Stop the refresher explicitly; safe to call more than once."""
+        if self.proc is None or self.proc.pid is None:
+            return
+        if self.proc.is_alive():
+            self.proc.terminate()  # we don't need clean termination
         self.proc.join(timeout=5)
         if self.proc.exitcode is None:
             print('warning: sudo refresher has not terminated yet')
         else:
             pass  # normal termination
+
+    def __del__(self):
+        self.close()
